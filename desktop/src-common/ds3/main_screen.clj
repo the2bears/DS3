@@ -66,12 +66,12 @@
 
 (defn check-for-input [screen entities]
    (cond
-     (key-pressed? :x) (do (let [ship (first (filter #(:ship? %) entities))
+     (key-pressed? :x) (let [ship (first (filter #(:ship? %) entities))
                                  x (:x ship)
                                  y (:y ship)]
                            ;(prn :x x :y y)
                          (conj entities (bullet/create-bullet! screen x (+ 0.1 y)))
-                             ))
+                             )
      :else entities
      ))
 
@@ -103,6 +103,7 @@ body))
     ))
 
 (-> main-screen :entities deref)
+
 ;(use 'ds3.core.desktop-launcher)
 
 ;(-main)

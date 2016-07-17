@@ -11,6 +11,8 @@
 (def bullet-width (c/screen-to-world 2))
 (def bullet-height (c/screen-to-world 2))
 (def bullet-speed (c/screen-to-world 240));2400?
+(def half-width (/ bullet-width 2))
+(def half-height (/ bullet-height 2))
 
 (defn filter! [f-def]
   (let [bullet-filter (.filter f-def)]
@@ -21,9 +23,7 @@
 (defn create-bullet-body!
   [screen x y]
   (let [body (add-body! screen (body-def :dynamic
-                                         :bullet true))
-        half-width (/ bullet-width 2)
-        half-height (/ bullet-height 2)]
+                                         :bullet true))]
     (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width half-height) 0)
          (fixture-def :density 0 :friction 0 :restitution 0 :shape)
          (filter!)
@@ -39,6 +39,8 @@
   (assoc bullet
     :id :bullet
     :bullet? true
+    :x (- x half-width)
+    :y (- y half-height)
     :body (create-bullet-body! screen x y)
     :width bullet-width :height bullet-height)))
 
