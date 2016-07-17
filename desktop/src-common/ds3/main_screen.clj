@@ -54,6 +54,19 @@
             (mark-for-removal entity2 entities)))
         ;:else entities
       )))
+
+  :on-timer
+  (fn [screen entities]
+    (case (:id screen)
+      :refresh-shot (update! screen :fire-when-ready true)
+      nil)
+    nil)
+
+  :on-key-up
+  (fn [screen entities]
+    (cond (= (:key screen) (key-code :x))
+          (update! screen :fire-when-ready true))
+    entities)
   )
 
 
@@ -66,12 +79,14 @@
 
 (defn check-for-input [screen entities]
    (cond
-     (key-pressed? :x) (let [ship (first (filter #(:ship? %) entities))
-                                 x (:x ship)
+     (and (get screen :fire-when-ready true)
+          (key-pressed? :x)) (let [ship (first (filter #(:ship? %) entities))
+                               x (:x ship)
                                  y (:y ship)]
                            ;(prn :x x :y y)
-                         (conj entities (bullet/create-bullet! screen x (+ 0.1 y)))
-                             )
+                         (update! screen :fire-when-ready false)
+                         (add-timer! screen :refresh-shot 0.2)
+                         (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
      :else entities
      ))
 
@@ -92,18 +107,15 @@
           0 0]
          float-array
          (chain-shape :create-chain)
-         (fixture-def :density 1 :restitution 1 :shape )
+         (fixture-def :is-sensor true :density 1 :restitution 1 :shape )
          (body! body :create-fixture))
 body))
 
 (defn mark-for-removal [entity entities]
   (do
-    (body! (:body entity) :set-linear-velocity 0 0)
     (remove #(= entity %) entities)
     ))
 
 (-> main-screen :entities deref)
 
-;(use 'ds3.core.desktop-launcher)
-
-;(-main)
+;(do (use 'ds3.core.desktop-launcher)(-main))
