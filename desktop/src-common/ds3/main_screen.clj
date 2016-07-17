@@ -2,10 +2,11 @@
   (:require [play-clj.core :refer :all]
             [play-clj.g2d-physics :refer :all]
             [ds3.common :as c]
-            [ds3.ship :as ship])
+            [ds3.ship :as ship]
+            [ds3.bullet :as bullet])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
-(declare handle-all-entities move-player-tick move)
+(declare handle-all-entities move-player-tick move create-oob-entity! create-oob-body! check-for-input mark-for-removal)
 
 (defscreen main-screen
   :on-show
@@ -15,8 +16,11 @@
                           :camera (orthographic :set-to-ortho false (c/screen-to-world c/game-width) (c/screen-to-world c/game-height))
                           :world (box-2d 0 0);-2.0)
                           :debug-renderer (Box2DDebugRenderer.))
+          top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
+                    (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
           pixel-ship (ship/create-ship-entity! screen)]
-      [pixel-ship]))
+      [(assoc top-oob :id :top-oob :oob? true)
+       pixel-ship]))
 
   :on-render
   (fn [screen entities]
@@ -27,10 +31,30 @@
       (let [entities
             (->> entities
                  (step! screen)
+                 (check-for-input screen)
                  (handle-all-entities screen)
                  (render! screen))]
         (.render debug-renderer world (.combined camera))
-        entities))))
+        entities)))
+
+  :on-begin-contact
+  (fn [screen entities]
+    (let [entity (first-entity screen entities)
+          entity2 (second-entity screen entities)
+          world (:world screen)]
+      ;(prn :body-count (box-2d! screen :get-body-count))
+      (cond
+        (or (:bullet? entity)
+            (:bullet? entity2))
+        (do
+          ;(prn (:id entity) (:id entity2))
+          (if (:bullet? entity)
+            (mark-for-removal entity entities))
+          (if (:bullet? entity2)
+            (mark-for-removal entity2 entities)))
+        ;:else entities
+      )))
+  )
 
 
 (defn handle-all-entities [screen entities]
@@ -39,3 +63,46 @@
               (cond-> entity
                       (:ship? entity) ship/move-player-tick)))
        ))
+
+(defn check-for-input [screen entities]
+   (cond
+     (key-pressed? :x) (do (let [ship (first (filter #(:ship? %) entities))
+                                 x (:x ship)
+                                 y (:y ship)]
+                           ;(prn :x x :y y)
+                         (conj entities (bullet/create-bullet! screen x (+ 0.1 y)))
+                             ))
+     :else entities
+     ))
+
+(defn create-oob-entity!
+  [screen width height]
+  (let [rect (bundle nil)]
+  (assoc rect
+         :body (create-oob-body! screen width height)
+         :width width :height height)))
+
+(defn create-oob-body!
+  [screen width height]
+  (let [body (add-body! screen (body-def :static))]
+    (->> [0 0
+          0 height
+          width height
+          width 0
+          0 0]
+         float-array
+         (chain-shape :create-chain)
+         (fixture-def :density 1 :restitution 1 :shape )
+         (body! body :create-fixture))
+body))
+
+(defn mark-for-removal [entity entities]
+  (do
+    (body! (:body entity) :set-linear-velocity 0 0)
+    (remove #(= entity %) entities)
+    ))
+
+(-> main-screen :entities deref)
+;(use 'ds3.core.desktop-launcher)
+
+;(-main)
