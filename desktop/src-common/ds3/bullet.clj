@@ -14,11 +14,10 @@
 (def half-width (/ bullet-width 2))
 (def half-height (/ bullet-height 2))
 
-(defn filter! [f-def]
-  (let [bullet-filter (.filter f-def)]
+(defn modify-filter [fixture]
+  (let [bullet-filter (fixture! fixture :get-filter-data)]
     (set! (.groupIndex bullet-filter) bullet-filter-group)
-    f-def)
-  )
+    (fixture! fixture :set-filter-data bullet-filter)))
 
 (defn create-bullet-body!
   [screen x y]
@@ -26,8 +25,8 @@
                                          :bullet true))]
     (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width half-height) 0)
          (fixture-def :density 0 :friction 0 :restitution 0 :shape)
-         (filter!)
-         (body! body :create-fixture))
+         (body! body :create-fixture)
+         (modify-filter))
     (doto body
       (body-position! (- x half-width) (- y half-height) 0)
       (body! :set-linear-velocity 0 bullet-speed))

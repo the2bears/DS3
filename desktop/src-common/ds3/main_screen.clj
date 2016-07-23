@@ -20,6 +20,12 @@
                     (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
           pixel-ship (ship/create-ship-entity! screen)]
       [(assoc top-oob :id :top-oob :oob? true)
+       ;(for [col (range c/enemy-columns)
+       ;      row (range c/enemy-rows)
+       ;      :let [x (+ c/enemy-start-x (* col c/enemy-width))
+       ;            y (+ c/enemy-start-y (* row c/enemy-height))]]
+       ;  (doto (ship/create-enemy-entity! screen (rand-int Integer/MAX_VALUE))
+       ;           (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)))
        pixel-ship]))
 
   :on-render
@@ -81,8 +87,8 @@
    (cond
      (and (get screen :fire-when-ready true)
           (key-pressed? :x)) (let [ship (first (filter #(:ship? %) entities))
-                               x (:x ship)
-                                 y (:y ship)]
+                               x (+ (:x ship) (c/screen-to-world c/ship-mp-xoffset))
+                               y (+ (:y ship) (c/screen-to-world c/ship-mp-yoffset))]
                            ;(prn :x x :y y)
                          (update! screen :fire-when-ready false)
                          (add-timer! screen :refresh-shot 0.2)
@@ -107,7 +113,9 @@
           0 0]
          float-array
          (chain-shape :create-chain)
-         (fixture-def :is-sensor true :density 1 :restitution 1 :shape )
+         (fixture-def
+           :is-sensor true
+           :density 1 :restitution 1 :shape )
          (body! body :create-fixture))
 body))
 

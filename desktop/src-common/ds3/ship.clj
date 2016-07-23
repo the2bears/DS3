@@ -2,45 +2,60 @@
   (:require [pixel-ships.core :as psc :refer :all]
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
-            [play-clj.core :refer [bundle shape color key-pressed?]]
-            [play-clj.g2d-physics :refer :all]))
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap*]]
+            [play-clj.g2d :refer [texture]]
+            [play-clj.g2d-physics :refer :all]
+            [play-clj.math :refer [vector-2]])
+  (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare custom-shape play-clj-color hsv-to-rgb create-ship-body! create-pixel-ship-play-clj move)
+(declare play-clj-color hsv-to-rgb create-ship-body! create-enemy-body!
+         move draw-rect-pixelmap create-pixel-ship-texture)
 
 (def speed (c/screen-to-world 1.5))
 
 (defn create-ship-entity! [screen]
-  (let [pixel-ship (bundle nil)]
+  (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE)]
     (doto (assoc pixel-ship
-            :body (create-ship-body! screen (c/screen-to-world 3))
-            :entities (create-pixel-ship-play-clj Integer/MAX_VALUE)
+            :body (create-ship-body! screen)
+            :width (c/screen-to-world 16) :height (c/screen-to-world 16)
             :id :pixel-ship :ship? true)
-        (body-position! (c/screen-to-world (/ c/game-width 2)) (c/screen-to-world (/ c/game-height 10)) 180)
+        (body-position! (c/screen-to-world (/ c/game-width 2)) (c/screen-to-world (/ c/game-height 10)) 0)
         (body! :set-linear-velocity 0 0))))
 
 (defn create-ship-body!
-  [screen radius]
-  (let [body (add-body! screen (body-def :dynamic))]
-    (->> (circle-shape :set-radius radius)
+  [screen]
+  (let [body (add-body! screen (body-def :static))]
+    (->> (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 (c/screen-to-world c/ship-mp-xoffset) (c/screen-to-world c/ship-mp-yoffset)) 0)
          (fixture-def :density 1 :friction 0 :restitution 1 :shape)
          (body! body :create-fixture))
     body))
 
-(defn create-pixel-ship-play-clj
+(defn create-pixel-map-list
   ([]
-   (create-pixel-ship-play-clj (rand-int Integer/MAX_VALUE)))
+   (create-pixel-map-list (rand-int Integer/MAX_VALUE)))
   ([seed]
    (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc bollinger/model :seed seed)))
          tags (keys (:pixels ship-map))
          pixels (:pixels ship-map)
-         shape-builder (fn[s] (reduce (fn[acc n] (conj acc (custom-shape n))) [] s))]
+         shape-builder (fn[s] (reduce (fn[acc n] (conj acc n)) [] s))]
      (reduce (fn[acc tag](concat (shape-builder (tag pixels)) acc)) [] tags))))
 
-(def p-per-c (c/screen-to-world 1))
+(defn create-pixel-ship-texture
+  ([]
+   (create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))
+  ([seed]
+   (let [pixel-map-list (create-pixel-map-list seed)
+         pix-map (pixmap* 16 16 Pixmap$Format/RGBA8888)]
+     (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
+     (texture pix-map))))
 
-(defn custom-shape [{:keys [x y color]}]
+(def p-per-r 1)
+
+(defn draw-rect-pixelmap [pix-map {:keys [x y color]}]
   (let [c (play-clj-color color)]
-    (shape :filled :set-color c :rect (- (* x p-per-c) (* 6 p-per-c)) (- (* y p-per-c) (* 6 p-per-c)) p-per-c p-per-c)))
+    (doto pix-map
+      (pixmap! :set-color c)
+      (pixmap! :fill-rectangle x y p-per-r p-per-r))))
 
 (defn play-clj-color
   ([{:keys [h s v]}]
