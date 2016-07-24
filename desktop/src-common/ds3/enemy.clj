@@ -39,3 +39,13 @@
          (body! body :create-fixture))
     body))
 
+
+(defn create-enemies [screen]
+  (let [seeds (into [] (take c/enemy-height (repeatedly #(rand-int Integer/MAX_VALUE))))]
+         (for [col (range c/enemy-columns)
+               row (range c/enemy-rows)
+               :let [x (+ c/enemy-start-x (* col c/enemy-width))
+                     y (+ c/enemy-start-y (* row c/enemy-height))]]
+           (doto (create-enemy-entity! screen (nth seeds row))
+             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
+             (assoc :row row :col col)))))

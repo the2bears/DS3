@@ -21,14 +21,7 @@
                     (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
           pixel-ship (ship/create-ship-entity! screen)]
       [(assoc top-oob :id :top-oob :oob? true)
-       (let [seeds (into [] (take c/enemy-height (repeatedly #(rand-int Integer/MAX_VALUE))))]
-         (for [col (range c/enemy-columns)
-               row (range c/enemy-rows)
-               :let [x (+ c/enemy-start-x (* col c/enemy-width))
-                     y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (enemy/create-enemy-entity! screen (nth seeds row))
-             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
-             (assoc :row row :col col))))
+       (enemy/create-enemies screen)
        pixel-ship]))
 
   :on-render

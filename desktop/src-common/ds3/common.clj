@@ -19,7 +19,7 @@
 
 (def ^:const enemy-height 20)
 
-(def ^:const enemy-start-x 12)
+(def ^:const enemy-start-x (- (/ (- game-width (* (- enemy-columns 1) enemy-width)) 2) ship-mp-xoffset))
 
 (def ^:const enemy-start-y 150)
 
