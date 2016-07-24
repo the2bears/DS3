@@ -8,8 +8,7 @@
             [play-clj.math :refer [vector-2]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare play-clj-color hsv-to-rgb create-ship-body! create-enemy-body!
-         move draw-rect-pixelmap create-pixel-ship-texture)
+(declare play-clj-color hsv-to-rgb create-ship-body! move draw-rect-pixelmap create-pixel-ship-texture)
 
 (def speed (c/screen-to-world 1.5))
 
@@ -29,23 +28,6 @@
          (fixture-def :density 1 :friction 0 :restitution 1 :shape)
          (body! body :create-fixture))
     body))
-
-(defn create-enemy-entity! [screen seed]
-  (let [pixel-ship (create-pixel-ship-texture seed)]
-    (doto (assoc pixel-ship
-            :body (create-enemy-body! screen)
-            :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :enemy-ship :enemy? true)
-        (body! :set-linear-velocity 0 0))))
-
-(defn create-enemy-body!
-  [screen]
-  (let [body (add-body! screen (body-def :static))]
-    (->> (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 (c/screen-to-world c/ship-mp-xoffset) (c/screen-to-world c/ship-mp-yoffset)) 0)
-         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
-         (body! body :create-fixture))
-    body))
-
 
 (defn create-pixel-map-list
   ([]

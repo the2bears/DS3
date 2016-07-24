@@ -3,10 +3,11 @@
             [play-clj.g2d-physics :refer :all]
             [ds3.common :as c]
             [ds3.ship :as ship]
+            [ds3.enemy :as enemy]
             [ds3.bullet :as bullet])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
-(declare handle-all-entities move-player-tick move create-oob-entity! create-oob-body! check-for-input mark-for-removal)
+(declare handle-all-entities create-oob-entity! create-oob-body! check-for-input mark-for-removal)
 
 (defscreen main-screen
   :on-show
@@ -25,8 +26,9 @@
                row (range c/enemy-rows)
                :let [x (+ c/enemy-start-x (* col c/enemy-width))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (ship/create-enemy-entity! screen (nth seeds row))
-             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0))))
+           (doto (enemy/create-enemy-entity! screen (nth seeds row))
+             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
+             (assoc :row row :col col))))
        pixel-ship]))
 
   :on-render
@@ -34,7 +36,7 @@
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
           camera (:camera screen)]
-      (clear!)
+      (clear! 0.1 0.1 0.12 1)
       (let [entities
             (->> entities
                  (step! screen)
