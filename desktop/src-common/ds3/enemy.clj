@@ -23,12 +23,13 @@
                   {:x 3, :y 8} {:x 1, :y 9} {:x 2, :y 9} {:x 3, :y 9} {:x 4, :y 9} {:x 3, :y 10} {:x 4, :y 10} {:x 5, :y 10}]}})
 
 
-(defn create-enemy-entity! [screen seed]
+(defn create-enemy-entity! [screen seed col]
   (let [pixel-ship (ship/create-pixel-ship-texture seed)]
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :enemy-ship :enemy? true)
+            :id :enemy-ship :enemy? true
+            :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta))
         (body! :set-linear-velocity 0 0))))
 
 (defn create-enemy-body!
@@ -42,10 +43,20 @@
 
 (defn create-enemies [screen]
   (let [seeds (into [] (take c/enemy-height (repeatedly #(rand-int Integer/MAX_VALUE))))]
-         (for [col (range c/enemy-columns)
-               row (range c/enemy-rows)
-               :let [x (+ c/enemy-start-x (* col c/enemy-width))
+         (for [row (range c/enemy-rows)
+               col (range c/enemy-columns)
+               :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (create-enemy-entity! screen (nth seeds row))
+           (doto (create-enemy-entity! screen (nth seeds row) col)
              (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
              (assoc :row row :col col)))))
+
+(defn move [entity screen]
+  (let [on-left (< (+ (:x entity) (c/screen-to-world c/ship-mp-xoffset)) c/half-game-width-world)
+        outward  (:formation-expand screen)
+        b (cond on-left outward
+                :else (not outward))
+        delta-fn (cond b -
+                       :else +)]
+    (body-position! entity (delta-fn (:x entity) (:drift-x-delta entity)) (:y entity) (:angle entity)))
+  entity)

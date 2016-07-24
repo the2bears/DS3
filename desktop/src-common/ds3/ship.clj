@@ -97,8 +97,7 @@
     entity)
   )
 
-(defn move
-  [entity direction]
+(defn move [entity direction]
   (case direction
     :right (body-position! entity (+ (:x entity) speed) (:y entity) (:angle entity))
     :left (body-position! entity (- (:x entity) speed) (:y entity) (:angle entity))

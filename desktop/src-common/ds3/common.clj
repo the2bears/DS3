@@ -1,11 +1,15 @@
 (ns ds3.common)
 
-
 (def ^:const s-to-w-divider 50.0)
+
+(defn screen-to-world [x]
+  (float (/ x s-to-w-divider)))
 
 (def ^:const game-width 224.0)
 
 (def ^:const game-height 288.0)
+
+(def ^:const half-game-width-world (screen-to-world (/ game-width 2)))
 
 (def ^:const ship-mp-xoffset 6)
 
@@ -15,13 +19,24 @@
 
 (def ^:const enemy-columns 10)
 
-(def ^:const enemy-width 20)
+(def ^:const center 4.5)
+
+(def ^:const enemy-width-min 16)
+
+(def ^:const enemy-width-max 22)
+
+(def ^:const enemy-width-start enemy-width-min); (/ (+ enemy-width-min enemy-width-max) 2))
+
+(def ^:const drift-ticks 240)
+
+(def ^:const drift-x-delta (screen-to-world (/ (- enemy-width-max enemy-width-min) drift-ticks)))
 
 (def ^:const enemy-height 20)
 
-(def ^:const enemy-start-x (- (/ (- game-width (* (- enemy-columns 1) enemy-width)) 2) ship-mp-xoffset))
+(def ^:const enemy-start-x (- (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2) ship-mp-xoffset))
 
 (def ^:const enemy-start-y 150)
 
-(defn screen-to-world [x]
-  (float (/ x s-to-w-divider)))
+(defn distance-from-center [n]
+   (Math/abs (- center n)))
+
