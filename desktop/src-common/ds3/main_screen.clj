@@ -20,12 +20,12 @@
                     (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
           pixel-ship (ship/create-ship-entity! screen)]
       [(assoc top-oob :id :top-oob :oob? true)
-       ;(for [col (range c/enemy-columns)
-       ;      row (range c/enemy-rows)
-       ;      :let [x (+ c/enemy-start-x (* col c/enemy-width))
-       ;            y (+ c/enemy-start-y (* row c/enemy-height))]]
-       ;  (doto (ship/create-enemy-entity! screen (rand-int Integer/MAX_VALUE))
-       ;           (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)))
+       (for [col (range c/enemy-columns)
+             row (range c/enemy-rows)
+             :let [x (+ c/enemy-start-x (* col c/enemy-width))
+                   y (+ c/enemy-start-y (* row c/enemy-height))]]
+         (doto (ship/create-enemy-entity! screen (rand-int Integer/MAX_VALUE))
+                  (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)))
        pixel-ship]))
 
   :on-render
@@ -40,7 +40,7 @@
                  (check-for-input screen)
                  (handle-all-entities screen)
                  (render! screen))]
-        (.render debug-renderer world (.combined camera))
+        ;(.render debug-renderer world (.combined camera))
         entities)))
 
   :on-begin-contact
