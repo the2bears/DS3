@@ -29,7 +29,8 @@
             :body (create-enemy-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
             :id :enemy-ship :enemy? true
-            :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta))
+            :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
+            :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0))
         (body! :set-linear-velocity 0 0))))
 
 (defn create-enemy-body!
@@ -56,7 +57,9 @@
         outward  (:formation-expand screen)
         b (cond on-left outward
                 :else (not outward))
-        delta-fn (cond b -
+        delta-x-fn (cond b -
+                       :else +)
+        delta-y-fn (cond outward -
                        :else +)]
-    (body-position! entity (delta-fn (:x entity) (:drift-x-delta entity)) (:y entity) (:angle entity)))
+    (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity)))
   entity)
