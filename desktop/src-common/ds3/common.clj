@@ -19,7 +19,7 @@
 
 (def ^:const enemy-columns 10)
 
-(def ^:const center 4.5)
+(def ^:const center (float (/ (- enemy-columns 1) 2)))
 
 (def ^:const enemy-width-min 16)
 
