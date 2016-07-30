@@ -2,11 +2,10 @@
   (:require [pixel-ships.core :as psc :refer :all]
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap*]]
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
-            [play-clj.math :refer [vector-2]])
-  (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
+            [play-clj.math :refer [vector-2]]))
 
 (declare play-clj-color hsv-to-rgb create-ship-body! move draw-rect-pixelmap create-pixel-ship-texture)
 
@@ -44,7 +43,7 @@
    (create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))
   ([seed]
    (let [pixel-map-list (create-pixel-map-list seed)
-         pix-map (pixmap* 16 16 Pixmap$Format/RGBA8888)]
+         pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
      (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
      (texture pix-map))))
 
