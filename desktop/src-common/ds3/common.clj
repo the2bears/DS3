@@ -25,7 +25,7 @@
 
 (def ^:const enemy-width-max 22)
 
-(def ^:const enemy-width-start enemy-width-min); (/ (+ enemy-width-min enemy-width-max) 2))
+(def ^:const enemy-width-start enemy-width-min);
 
 (def ^:const drift-ticks 240)
 

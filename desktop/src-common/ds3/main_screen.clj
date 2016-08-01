@@ -4,7 +4,8 @@
             [ds3.common :as c]
             [ds3.ship :as ship]
             [ds3.enemy :as enemy]
-            [ds3.bullet :as bullet])
+            [ds3.bullet :as bullet]
+            [ds3.explosion :as exp])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
 (declare handle-all-entities create-oob-entity! create-oob-body! check-for-input mark-for-removal)
@@ -47,19 +48,17 @@
   :on-begin-contact
   (fn [screen entities]
     (let [entity (first-entity screen entities)
-          entity2 (second-entity screen entities)
-          world (:world screen)]
-      ;(prn :body-count (box-2d! screen :get-body-count))
+          entity2 (second-entity screen entities)]
       (cond
-        (or (:bullet? entity)
-            (:bullet? entity2))
-        (do
-          ;(prn (:id entity) (:id entity2))
-          (if (:bullet? entity)
-            (mark-for-removal entity entities))
-          (if (:bullet? entity2)
-            (mark-for-removal entity2 entities)))
-        ;:else entities
+        (or (and (:bullet? entity) (:enemy? entity2))
+            (and (:bullet? entity2) (:enemy? entity)))
+        (let [b (if (:bullet? entity) entity entity2)
+              e (if (:bullet? entity) entity2 entity)]
+            (do
+              ;(prn (:x entity2) (:y entity2))
+              (remove #(= e %)
+                      (mark-for-removal b (conj entities (exp/create-explosion (:x e) (:y e)))))
+              ))
       )))
 
   :on-timer
@@ -82,6 +81,7 @@
        (map (fn [entity]
               (cond (:ship? entity) (ship/move-player-tick entity)
                     (:enemy? entity) (enemy/move entity screen)
+                    (:explosion? entity) (exp/handle-explosion entity)
                     :else entity)))
        ))
 
