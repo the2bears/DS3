@@ -1,5 +1,5 @@
 (ns ds3.explosion
-  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format]]
+  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format sound]]
             [play-clj.g2d :refer [texture]]
             [ds3.common :as c]
             [clojure.pprint :refer [pprint]]))
@@ -9,6 +9,8 @@
 (def ^:const y-offset (c/screen-to-world 2))
 
 (def ^:const default-frame-ticks 1)
+
+;(def explosion-sound (sound "explosion.ogg"))
 
 (defn create-circle-texture [c]
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
@@ -31,6 +33,7 @@
         circle-texture3 (create-circle-entity x y 6 5.5 (color :yellow))
         circle-texture4 (create-circle-entity x y 1 1.5 (color :white))
         explosion (bundle circle-texture circle-texture2 circle-texture3 circle-texture4)]
+    (sound "explosion.ogg" :play)
     (assoc explosion :explosion? true)))
 
 (defn handle-explosion [{:keys [entities] :as explosion}]

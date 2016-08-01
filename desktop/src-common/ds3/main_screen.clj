@@ -1,6 +1,6 @@
 (ns ds3.main-screen
-  (:require [play-clj.core :refer :all]
-            [play-clj.g2d-physics :refer :all]
+  (:require [play-clj.core :refer [add-timer! bundle clear! defscreen game key-code key-pressed? orthographic render! stage update!]]
+            [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [ds3.common :as c]
             [ds3.ship :as ship]
             [ds3.enemy :as enemy]

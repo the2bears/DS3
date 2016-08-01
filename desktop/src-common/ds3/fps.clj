@@ -1,6 +1,6 @@
 (ns ds3.fps
-  (:require [play-clj.core :refer :all]
-            [play-clj.ui :refer :all]
+  (:require [play-clj.core :refer [color defscreen game orthographic render! stage update!]]
+            [play-clj.ui :refer [label label!]]
             [ds3.common :as c]))
 
 (defscreen fps-screen
