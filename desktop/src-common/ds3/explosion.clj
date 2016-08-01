@@ -1,13 +1,14 @@
 (ns ds3.explosion
-  (:require [play-clj.core :refer :all]
-            [play-clj.ui :refer :all]
-            [play-clj.g2d :refer :all]
+  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format]]
+            [play-clj.g2d :refer [texture]]
             [ds3.common :as c]
             [clojure.pprint :refer [pprint]]))
 
 (def ^:const x-offset (c/screen-to-world -3))
 
 (def ^:const y-offset (c/screen-to-world 2))
+
+(def ^:const default-frame-ticks 1)
 
 (defn create-circle-texture [c]
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
@@ -21,7 +22,7 @@
     (assoc circle-entity
       :width (c/screen-to-world (* 2 width)) :height (c/screen-to-world (* 2 width))
       :x (+ x x-offset (c/screen-to-world  (- 8 width))) :y (+ y y-offset (c/screen-to-world (- 8 width)))
-      :ttl 12 :frame-ticks 1
+      :ttl 12 :frame-ticks default-frame-ticks
       )))
 
 (defn create-explosion [x y]
@@ -40,7 +41,7 @@
           (assoc explosion :entities [part1 part2 part3 (assoc part4
                                                           :x (- x (c/screen-to-world 0.5)) :y (- y (c/screen-to-world 0.5))
                                                           :width (+ width (c/screen-to-world 1)) :height (+ height (c/screen-to-world 1))
-                                                          :ttl (- ttl 1) :frame-ticks 1)])
+                                                          :ttl (- ttl 1) :frame-ticks default-frame-ticks)])
           (and (> ttl 0) (> frame-ticks 0))
           (assoc explosion :entities [part1 part2 part3 (assoc part4 :frame-ticks (- frame-ticks 1))])
 
