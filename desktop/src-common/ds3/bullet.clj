@@ -38,7 +38,7 @@
     (sound "shot3.ogg" :play)
     (assoc bullet
       :id :bullet
-      :bullet? true
+      :bullet? true :render-layer 50
       :x (- x half-width)
       :y (- y half-height)
       :body (create-bullet-body! screen x y)

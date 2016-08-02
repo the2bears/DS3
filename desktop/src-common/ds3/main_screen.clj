@@ -23,7 +23,7 @@
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
                     (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
           pixel-ship (ship/create-ship-entity! screen)]
-      [(assoc top-oob :id :top-oob :oob? true)
+      [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (enemy/create-enemies screen)
        pixel-ship]))
 
@@ -41,6 +41,7 @@
                  (step! screen)
                  (check-for-input screen)
                  (handle-all-entities screen)
+                 (sort-by :render-layer)
                  (render! screen))]
         ;(.render debug-renderer world (.combined camera))
         entities)))

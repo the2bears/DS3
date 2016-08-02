@@ -34,7 +34,7 @@
         circle-texture4 (create-circle-entity x y 1 1.5 (color :white))
         explosion (bundle circle-texture circle-texture2 circle-texture3 circle-texture4)]
     (sound "explosion.ogg" :play)
-    (assoc explosion :explosion? true)))
+    (assoc explosion :explosion? true :render-layer 100)))
 
 (defn handle-explosion [{:keys [entities] :as explosion}]
   (let [[part1 part2 part3 {:keys [x y width height ttl frame-ticks] :as part4}] entities]

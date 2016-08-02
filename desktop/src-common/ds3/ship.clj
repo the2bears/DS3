@@ -16,7 +16,7 @@
     (doto (assoc pixel-ship
             :body (create-ship-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :pixel-ship :ship? true)
+            :id :pixel-ship :ship? true :render-layer 90)
         (body-position! (c/screen-to-world (- (/ c/game-width 2) c/ship-mp-xoffset)) (c/screen-to-world (/ c/game-height 20)) 0)
         (body! :set-linear-velocity 0 0))))
 
