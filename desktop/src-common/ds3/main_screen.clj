@@ -18,6 +18,7 @@
                           :camera (orthographic :set-to-ortho false (c/screen-to-world c/game-width) (c/screen-to-world c/game-height))
                           :world (box-2d 0 0);-2.0)
                           :ticks 0
+                          :level-score 0
                           :formation-expand false
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
@@ -56,7 +57,8 @@
         (let [b (if (:bullet? entity) entity entity2)
               e (if (:bullet? entity) entity2 entity)]
             (do
-              ;(prn (:x entity2) (:y entity2))
+              (update! screen :level-score (+ (:level-score screen) (:score e)))
+              (prn :level-score (:level-score screen))
               (remove #(= e %)
                       (mark-for-removal b (conj entities (exp/create-explosion (:x e) (:y e)))))
               ))
@@ -78,13 +80,17 @@
 
 
 (defn handle-all-entities [screen entities]
-  (->> entities
+  (let [entities (->> entities
        (map (fn [entity]
               (cond (:ship? entity) (ship/move-player-tick entity)
                     (:enemy? entity) (enemy/move entity screen)
                     (:explosion? entity) (exp/handle-explosion entity)
                     :else entity)))
-       ))
+       )]
+    ;(if (not-any? :enemy? entities)
+    ;  (prn :level-score (:level-score screen)))
+    entities
+    ))
 
 (defn check-for-input [screen entities]
    (cond

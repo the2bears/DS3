@@ -28,7 +28,7 @@
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :enemy-ship :enemy? true :render-layer 70
+            :id :enemy-ship :enemy? true :render-layer 70 :score 100
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
             :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0))
         (body! :set-linear-velocity 0 0))))
