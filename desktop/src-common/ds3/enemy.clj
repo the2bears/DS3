@@ -23,8 +23,8 @@
                   {:x 3, :y 8} {:x 1, :y 9} {:x 2, :y 9} {:x 3, :y 9} {:x 4, :y 9} {:x 3, :y 10} {:x 4, :y 10} {:x 5, :y 10}]}})
 
 
-(defn create-enemy-entity! [screen seed col]
-  (let [pixel-ship (ship/create-pixel-ship-texture seed)]
+(defn create-enemy-entity! [screen ship-texture col]
+  (let [pixel-ship (texture ship-texture)]
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
@@ -43,12 +43,12 @@
 
 
 (defn create-enemies [screen]
-  (let [seeds (into [] (take c/enemy-height (repeatedly #(rand-int Integer/MAX_VALUE))))]
+  (let [ship-textures (into [] (take c/enemy-height (repeatedly #(ship/create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))))]
          (for [row (range c/enemy-rows)
                col (range c/enemy-columns)
                :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (create-enemy-entity! screen (nth seeds row) col)
+           (doto (create-enemy-entity! screen (nth ship-textures row) col)
              (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
              (assoc :row row :col col)))))
 
