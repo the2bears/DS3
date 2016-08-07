@@ -1,11 +1,12 @@
 (ns ds3.main-screen
-  (:require [play-clj.core :refer [add-timer! bundle clear! defscreen game key-code key-pressed? orthographic render! stage update!]]
+  (:require [play-clj.core :refer [add-timer! bundle clear! defscreen game key-code key-pressed? orthographic render! screen! stage update!]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [ds3.common :as c]
             [ds3.ship :as ship]
             [ds3.enemy :as enemy]
             [ds3.bullet :as bullet]
-            [ds3.explosion :as exp])
+            [ds3.explosion :as exp]
+            [ds3.hud :as hud])
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
 (declare handle-all-entities create-oob-entity! create-oob-body! check-for-input mark-for-removal)
@@ -58,7 +59,7 @@
               e (if (:bullet? entity) entity2 entity)]
             (do
               (update! screen :level-score (+ (:level-score screen) (:score e)))
-              (prn :level-score (:level-score screen))
+              (screen! hud/hud-screen :on-update-score :score (+ (:level-score screen) (:score e)))
               (remove #(= e %)
                       (mark-for-removal b (conj entities (exp/create-explosion (:x e) (:y e)))))
               ))

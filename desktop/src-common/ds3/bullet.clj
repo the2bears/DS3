@@ -41,5 +41,6 @@
       :id :bullet
       :bullet? true :render-layer 50
       :body (create-bullet-body! screen x y)
+      :x (- x half-width) :y (- y half-height)
       :width bullet-width :height (* 2 bullet-height))))
 
