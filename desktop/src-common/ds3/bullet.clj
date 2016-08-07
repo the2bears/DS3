@@ -1,5 +1,6 @@
 (ns ds3.bullet
   (:require [play-clj.core :refer [color shape sound]]
+            [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! fixture! fixture-def polygon-shape]]
             [play-clj.math :refer [vector-2]]
             [ds3.common :as c]
@@ -23,7 +24,7 @@
   [screen x y]
   (let [body (add-body! screen (body-def :dynamic
                                          :bullet true))]
-    (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width half-height) 0)
+    (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bullet-height half-height)) 0)
          (fixture-def :density 0 :friction 0 :restitution 0 :shape)
          (body! body :create-fixture)
          (modify-filter))
@@ -34,13 +35,11 @@
 
 (defn create-bullet!
   [screen x y]
-  (let [bullet (shape :filled :set-color (color :white) :rect 0 0 bullet-width bullet-height)]
+  (let [bullet (texture "shot.png" :set-region 0 0 2 4)]
     (sound "shot3.ogg" :play)
     (assoc bullet
       :id :bullet
       :bullet? true :render-layer 50
-      :x (- x half-width)
-      :y (- y half-height)
       :body (create-bullet-body! screen x y)
-      :width bullet-width :height bullet-height)))
+      :width bullet-width :height (* 2 bullet-height))))
 
