@@ -23,7 +23,7 @@
   (let [circle-entity (create-circle-texture c)]
     (assoc circle-entity
       :width (c/screen-to-world (* 2 width)) :height (c/screen-to-world (* 2 width))
-      :x (+ x x-offset (c/screen-to-world  (- 8 width))) :y (+ y y-offset (c/screen-to-world (- 8 width)))
+      :x (- x (c/screen-to-world  width)) :y (- y (c/screen-to-world width))
       :ttl 12 :frame-ticks default-frame-ticks
       )))
 

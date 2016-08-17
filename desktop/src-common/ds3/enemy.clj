@@ -29,6 +29,7 @@
             :body (create-enemy-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
             :id :enemy-ship :enemy? true :render-layer 70 :score 100
+            :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
             :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0))
         (body! :set-linear-velocity 0 0))))
@@ -36,7 +37,7 @@
 (defn create-enemy-body!
   [screen]
   (let [body (add-body! screen (body-def :static))]
-    (->> (polygon-shape :set-as-box (c/screen-to-world 3) (c/screen-to-world 3) (vector-2 (c/screen-to-world c/ship-mp-xoffset) (c/screen-to-world c/ship-mp-yoffset)) 0)
+    (->> (polygon-shape :set-as-box (c/screen-to-world 3) (c/screen-to-world 3) (vector-2 0 0) 0)
          (fixture-def :density 1 :friction 0 :restitution 1 :shape)
          (body! body :create-fixture))
     body))
@@ -49,7 +50,7 @@
                :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
            (doto (create-enemy-entity! screen (nth ship-textures row) col)
-             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
+             (body-position! (c/screen-to-world x) (c/screen-to-world y) (if (= 0 row) 45 0))
              (assoc :row row :col col)))))
 
 (defn move [entity screen]

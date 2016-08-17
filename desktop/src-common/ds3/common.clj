@@ -33,9 +33,9 @@
 
 (def ^:const enemy-height 20)
 
-(def ^:const enemy-start-x (- (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2) ship-mp-xoffset))
+(def ^:const enemy-start-x (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2));(- (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2) ship-mp-xoffset))
 
-(def ^:const enemy-start-y 150)
+(def ^:const enemy-start-y 170)
 
 (defn distance-from-center [n]
    (Math/abs (- center n)))

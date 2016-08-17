@@ -45,7 +45,7 @@
                  (handle-all-entities screen)
                  (sort-by :render-layer)
                  (render! screen))]
-        ;(.render debug-renderer world (.combined camera))
+        (.render debug-renderer world (.combined camera))
         entities)))
 
   :on-begin-contact
@@ -97,8 +97,8 @@
    (cond
      (and (get screen :fire-when-ready true)
           (key-pressed? :x)) (let [ship (first (filter #(:ship? %) entities))
-                               x (+ (:x ship) (c/screen-to-world c/ship-mp-xoffset))
-                               y (+ (:y ship) (c/screen-to-world c/ship-mp-yoffset))]
+                               x (:x ship)
+                               y (:y ship)]
                                ;(prn :x x :y y)
                          (update! screen :fire-when-ready false)
                          (add-timer! screen :refresh-shot 0.2)
