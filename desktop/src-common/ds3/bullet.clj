@@ -25,7 +25,7 @@
   (let [body (add-body! screen (body-def :dynamic
                                          :bullet true))]
     (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bullet-height half-height)) 0)
-         (fixture-def :density 0 :friction 0 :restitution 0 :shape)
+         (fixture-def :density 0 :friction 0 :restitution 0 :is-sensor true :shape)
          (body! body :create-fixture)
          (modify-filter))
     (doto body

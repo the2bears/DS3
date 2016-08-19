@@ -22,6 +22,9 @@
                   {:x 4, :y 5} {:x 1, :y 6} {:x 2, :y 6} {:x 3, :y 6} {:x 1, :y 7} {:x 2, :y 7} {:x 3, :y 7} {:x 1, :y 8} {:x 2, :y 8}
                   {:x 3, :y 8} {:x 1, :y 9} {:x 2, :y 9} {:x 3, :y 9} {:x 4, :y 9} {:x 3, :y 10} {:x 4, :y 10} {:x 5, :y 10}]}})
 
+(def state-machine {:drifting :attacking :attacking :returning :returning :drifting})
+
+(def starting-state :drifting)
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -31,14 +34,15 @@
             :id :enemy-ship :enemy? true :render-layer 70 :score 100
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
-            :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0))
+            :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0)
+            :movement-state starting-state)
         (body! :set-linear-velocity 0 0))))
 
 (defn create-enemy-body!
   [screen]
   (let [body (add-body! screen (body-def :static))]
     (->> (polygon-shape :set-as-box (c/screen-to-world 3) (c/screen-to-world 3) (vector-2 0 0) 0)
-         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+         (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
          (body! body :create-fixture))
     body))
 
@@ -54,7 +58,7 @@
              (assoc :row row :col col)))))
 
 (defn move [entity screen]
-  (let [on-left (< (+ (:x entity) (c/screen-to-world c/ship-mp-xoffset)) c/half-game-width-world)
+  (let [on-left (< (:x entity) c/half-game-width-world)
         outward  (:formation-expand screen)
         b (cond on-left outward
                 :else (not outward))
