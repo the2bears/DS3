@@ -2,14 +2,15 @@
   (:require [pixel-ships.core :as psc :refer :all]
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
+            [ds3.explosion :as exp]
             [ds3.ship :as ship]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap*]]
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* update!]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body!)
+(declare create-enemy-body! mark-for-removal)
 
 (def boss
   {:name :ds3-boss
@@ -68,3 +69,16 @@
                        :else +)]
     (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity)))
   entity)
+
+(defn handle-collision [enemy other-entity screen entities]
+  (cond (:bullet? other-entity)
+    (do
+      (update! screen :level-score (+ (:level-score screen) (:score enemy)))
+      ;(screen! hud/hud-screen :on-update-score :score (+ (:level-score screen) (:score enemy)))
+      (remove #(or (= enemy %)
+                   (= other-entity %))
+              (conj entities (exp/create-explosion (:x enemy) (:y enemy))))
+      )))
+
+(defn mark-for-removal [entity entities]
+  (remove #(= entity %) entities))

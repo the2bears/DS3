@@ -52,17 +52,10 @@
   (fn [screen entities]
     (let [entity (first-entity screen entities)
           entity2 (second-entity screen entities)]
+      ;(prn :entity (:id entity) :entity2 (:id entity2))
       (cond
-        (or (and (:bullet? entity) (:enemy? entity2))
-            (and (:bullet? entity2) (:enemy? entity)))
-        (let [b (if (:bullet? entity) entity entity2)
-              e (if (:bullet? entity) entity2 entity)]
-            (do
-              (update! screen :level-score (+ (:level-score screen) (:score e)))
-              (screen! hud/hud-screen :on-update-score :score (+ (:level-score screen) (:score e)))
-              (remove #(= e %)
-                      (mark-for-removal b (conj entities (exp/create-explosion (:x e) (:y e)))))
-              ))
+        (:enemy? entity) (enemy/handle-collision entity entity2 screen entities)
+        (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
       )))
 
   :on-timer
@@ -128,11 +121,6 @@
            :density 1 :restitution 1 :shape )
          (body! body :create-fixture))
 body))
-
-(defn mark-for-removal [entity entities]
-  (do
-    (remove #(= entity %) entities)
-    ))
 
 (-> main-screen :entities deref)
 
