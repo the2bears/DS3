@@ -4,6 +4,7 @@
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
+            [ds3.splines :as splines]
             [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* update!]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
@@ -55,30 +56,47 @@
                :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
            (doto (create-enemy-entity! screen (nth ship-textures row) col)
-             (body-position! (c/screen-to-world x) (c/screen-to-world y) (if (= 0 row) 45 0))
+             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
              (assoc :row row :col col)))))
 
 (defn move [entity screen]
-  (let [on-left (< (:x entity) c/half-game-width-world)
-        outward  (:formation-expand screen)
-        b (cond on-left outward
-                :else (not outward))
-        delta-x-fn (cond b -
-                       :else +)
-        delta-y-fn (cond outward -
-                       :else +)]
-    (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity)))
-  entity)
+  (let [ms (:movement-state entity)]
+    (cond (= :drifting ms)
+          (let [on-left (< (:x entity) c/half-game-width-world)
+                outward  (:formation-expand screen)
+                b (cond on-left outward
+                  :else (not outward))
+                delta-x-fn (cond b -
+                               :else +)
+                delta-y-fn (cond outward -
+                               :else +)]
+            (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity))
+            entity)
+          (= :attacking ms)
+          (splines/update-from-spline entity))
+    ))
 
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
-    (do
-      (update! screen :level-score (+ (:level-score screen) (:score enemy)))
-      ;(screen! hud/hud-screen :on-update-score :score (+ (:level-score screen) (:score enemy)))
-      (remove #(or (= enemy %)
-                   (= other-entity %))
-              (conj entities (exp/create-explosion (:x enemy) (:y enemy))))
-      )))
+        (cond (= :drifting (:movement-state enemy))
+              (do
+                (let [entities (->> entities
+                     (map (fn [entity]
+                            (cond (= enemy entity)
+                                  (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
+                                    :spline (splines/calibrate-spline (:x entity) (:y entity)))
+                                  :else entity)))
+                     )]
+                  (remove #(= other-entity %) entities)))
+              (= :attacking (:movement-state enemy))
+              (do
+                (update! screen :level-score (+ (:level-score screen) (:score enemy)))
+                ;(screen! hud/hud-screen :on-update-score :score (+ (:level-score screen) (:score enemy)))
+                (remove #(or (= enemy %)
+                             (= other-entity %))
+                        (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
+              :else nil
+              )))
 
-(defn mark-for-removal [entity entities]
-  (remove #(= entity %) entities))
+;(defn mark-for-removal [entity entities]
+;  (remove #(= entity %) entities))
