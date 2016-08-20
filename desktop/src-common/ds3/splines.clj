@@ -38,21 +38,3 @@
     spline))
 
 
-
-(defn update-from-spline [entity]
-  (let [delta-time d-time]
-    (let [current-time (if (> (:current-time entity) 1)
-                         (- (:current-time entity) 1)
-                         (:current-time entity))
-          spline (:spline entity)
-          v (b-spline! spline :value-at (vector-2 0 0) current-time)
-          dv (b-spline! spline :derivative-at (vector-2 0 0) current-time)
-          l (vector-2! dv :len)
-          a (- (vector-2! dv :angle) 90)
-          new-delta (/ (* delta-time speed) l)
-          x (x v)
-          y (y v)]
-      (body-position! entity x y a)
-      (assoc entity :current-time (+ current-time new-delta)))
-    ))
-

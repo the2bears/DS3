@@ -5,13 +5,13 @@
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
             [ds3.splines :as splines]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* update!]]
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
-            [play-clj.math :refer [vector-2]])
+            [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body! mark-for-removal)
+(declare create-enemy-body! update-drift update-from-spline)
 
 (def boss
   {:name :ds3-boss
@@ -27,6 +27,9 @@
 (def state-machine {:drifting :attacking :attacking :returning :returning :drifting})
 
 (def starting-state :drifting)
+
+(def speed (c/screen-to-world 6))
+(def d-time (/ 1.0 60))
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -62,18 +65,9 @@
 (defn move [entity screen]
   (let [ms (:movement-state entity)]
     (cond (= :drifting ms)
-          (let [on-left (< (:x entity) c/half-game-width-world)
-                outward  (:formation-expand screen)
-                b (cond on-left outward
-                  :else (not outward))
-                delta-x-fn (cond b -
-                               :else +)
-                delta-y-fn (cond outward -
-                               :else +)]
-            (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity))
-            entity)
+          (update-drift entity screen)
           (= :attacking ms)
-          (splines/update-from-spline entity))
+          (update-from-spline entity))
     ))
 
 (defn handle-collision [enemy other-entity screen entities]
@@ -98,5 +92,31 @@
               :else nil
               )))
 
-;(defn mark-for-removal [entity entities]
-;  (remove #(= entity %) entities))
+(defn update-drift [entity screen]
+  (let [on-left (< (:x entity) c/half-game-width-world)
+                outward  (:formation-expand screen)
+                b (cond on-left outward
+                  :else (not outward))
+                delta-x-fn (cond b -
+                               :else +)
+                delta-y-fn (cond outward -
+                               :else +)]
+            (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity))
+            entity))
+
+(defn update-from-spline [entity]
+  (let [delta-time d-time]
+    (let [current-time (if (> (:current-time entity) 1)
+                         (- (:current-time entity) 1)
+                         (:current-time entity))
+          spline (:spline entity)
+          v (b-spline! spline :value-at (vector-2 0 0) current-time)
+          dv (b-spline! spline :derivative-at (vector-2 0 0) current-time)
+          l (vector-2! dv :len)
+          a (- (vector-2! dv :angle) 90)
+          new-delta (/ (* delta-time speed) l)
+          x (x v)
+          y (y v)]
+      (body-position! entity x y a)
+      (assoc entity :current-time (+ current-time new-delta)))
+    ))
