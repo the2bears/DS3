@@ -7,10 +7,6 @@
 
 (declare calibrate-spline points-to-vector-2 update-spline)
 
-(def speed (c/screen-to-world 6))
-
-(def d-time (/ 1.0 60))
-
 (def ^:const hook-near-x (c/screen-to-world (* c/game-width (/ 50.0 800.0))));button hook distance, and distance on close side
 (def ^:const hook-far-x (c/screen-to-world (* c/game-width (/ 100.0 800.0))));x padding on far side
 (def ^:const hook-width-near-x (c/screen-to-world (- c/game-width (* c/game-width (/ 50.0 800.0)))));button hook distance, and distance on close side

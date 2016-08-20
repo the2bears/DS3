@@ -11,7 +11,7 @@
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body! update-drift update-from-spline)
+(declare create-enemy-body! update-drift update-from-spline update-home update-returning)
 
 (def boss
   {:name :ds3-boss
@@ -58,16 +58,19 @@
                col (range c/enemy-columns)
                :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (create-enemy-entity! screen (nth ship-textures row) col)
+           (doto (assoc (create-enemy-entity! screen (nth ship-textures row) col) :row row :col col :home-x (c/screen-to-world x) :home-y (c/screen-to-world y))
              (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
-             (assoc :row row :col col)))))
+             ))))
 
 (defn move [entity screen]
-  (let [ms (:movement-state entity)]
+  (let [ms (:movement-state entity)
+        entity (update-home entity screen)]
     (cond (= :drifting ms)
           (update-drift entity screen)
           (= :attacking ms)
-          (update-from-spline entity))
+          (update-from-spline entity)
+          (= :returning ms)
+          (update-returning entity screen))
     ))
 
 (defn handle-collision [enemy other-entity screen entities]
@@ -92,31 +95,40 @@
               :else nil
               )))
 
+(defn update-home [entity screen]
+  (let [on-left (< (:home-x entity) c/half-game-width-world)
+        outward  (:formation-expand screen)
+        b (cond on-left outward
+                :else (not outward))
+        delta-x-fn (cond b -
+                         :else +)
+        delta-y-fn (cond outward -
+                         :else +)]
+    (assoc entity :home-x (delta-x-fn (:home-x entity) (:drift-x-delta entity)) :home-y (delta-y-fn (:home-y entity) (:drift-y-delta entity)))))
+
 (defn update-drift [entity screen]
-  (let [on-left (< (:x entity) c/half-game-width-world)
-                outward  (:formation-expand screen)
-                b (cond on-left outward
-                  :else (not outward))
-                delta-x-fn (cond b -
-                               :else +)
-                delta-y-fn (cond outward -
-                               :else +)]
-            (body-position! entity (delta-x-fn (:x entity) (:drift-x-delta entity)) (delta-y-fn (:y entity) (:drift-y-delta entity)) (:angle entity))
-            entity))
+  (body-position! entity (:home-x entity) (:home-y entity) (:angle entity))
+  entity);)
 
 (defn update-from-spline [entity]
-  (let [delta-time d-time]
-    (let [current-time (if (> (:current-time entity) 1)
+  (let [current-time (if (> (:current-time entity) 1)
                          (- (:current-time entity) 1)
                          (:current-time entity))
-          spline (:spline entity)
-          v (b-spline! spline :value-at (vector-2 0 0) current-time)
-          dv (b-spline! spline :derivative-at (vector-2 0 0) current-time)
-          l (vector-2! dv :len)
-          a (- (vector-2! dv :angle) 90)
-          new-delta (/ (* delta-time speed) l)
-          x (x v)
-          y (y v)]
-      (body-position! entity x y a)
-      (assoc entity :current-time (+ current-time new-delta)))
-    ))
+        spline (:spline entity)
+        v (b-spline! spline :value-at (vector-2 0 0) current-time)
+        dv (b-spline! spline :derivative-at (vector-2 0 0) current-time)
+        l (vector-2! dv :len)
+        a (- (vector-2! dv :angle) 90)
+        new-delta (/ (* d-time speed) l)
+        x (x v)
+        y (y v)]
+    (body-position! entity x y a)
+    (cond (> (:current-time entity) 1)
+          (assoc entity :movement-state (state-machine (:movement-state entity)))
+          :else
+          (assoc entity :current-time (+ current-time new-delta))))
+  )
+
+(defn update-returning [entity screen]
+  (body-position! entity (:home-x entity) (:home-y entity) (:angle entity))
+  (assoc entity :movement-state (state-machine (:movement-state entity))))
