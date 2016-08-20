@@ -7,7 +7,7 @@
 
 (declare calibrate-spline points-to-vector-2 update-spline)
 
-(def speed (c/screen-to-world 6.0))
+(def speed (c/screen-to-world 6))
 
 (def d-time (/ 1.0 60))
 
@@ -27,14 +27,14 @@
         x-left (< x hw)
         x-fn (if x-left + -)
         x1 (if x-left hook-near-x hook-width-near-x)
-        x2 (if x-left hook-width-far-x hook-far-x)
+        x2 (if x-left hook-width-near-x hook-near-x)
         x3 (if x-left 0 (c/screen-to-world c/game-width))
         ty (- y hook-near-x)
-        dy (/ (- ty hook-near-x) 4.0)
+        dy (/ (- ty hook-near-x) 5)
         points [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
-                [x1 (- ty dy)][x2 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x1 hook-near-x][x3 (- hook-far-x)][x3 (- hook-far-x)]]
+                [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 hook-near-x][x3 (- hook-far-x)][x3 (- hook-far-x)]]
         points-vec (points-to-vector-2 points)
-        spline (catmull-rom-spline points-vec false)]
+        spline (b-spline points-vec 3 false)]
     spline))
 
 
@@ -45,16 +45,14 @@
                          (- (:current-time entity) 1)
                          (:current-time entity))
           spline (:spline entity)
-          v (catmull-rom-spline! spline :value-at (vector-2 0 0) current-time)
-          dv (catmull-rom-spline! spline :derivative-at (vector-2 0 0) current-time)
+          v (b-spline! spline :value-at (vector-2 0 0) current-time)
+          dv (b-spline! spline :derivative-at (vector-2 0 0) current-time)
           l (vector-2! dv :len)
           a (- (vector-2! dv :angle) 90)
           new-delta (/ (* delta-time speed) l)
           x (x v)
           y (y v)]
       (body-position! entity x y a)
-      (assoc entity
-        ;:x x :y y :angle a
-        :current-time (+ current-time new-delta)))
+      (assoc entity :current-time (+ current-time new-delta)))
     ))
 
