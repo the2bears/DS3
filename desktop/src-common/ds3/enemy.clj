@@ -29,7 +29,9 @@
 (def starting-state :drifting)
 
 (def speed (c/screen-to-world 6))
+(def returning-speed (c/screen-to-world 0.6))
 (def d-time (/ 1.0 60))
+returning-speed
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -122,13 +124,31 @@
         new-delta (/ (* d-time speed) l)
         x (x v)
         y (y v)]
-    (body-position! entity x y a)
     (cond (> (:current-time entity) 1)
-          (assoc entity :movement-state (state-machine (:movement-state entity)))
+          (do
+            (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
+            (assoc entity :movement-state (state-machine (:movement-state entity))))
           :else
-          (assoc entity :current-time (+ current-time new-delta))))
-  )
+          (do
+            (body-position! entity x y a)
+            (assoc entity :current-time (+ current-time new-delta)))
+          )
+    ))
 
-(defn update-returning [entity screen]
-  (body-position! entity (:home-x entity) (:home-y entity) (:angle entity))
-  (assoc entity :movement-state (state-machine (:movement-state entity))))
+(defn update-returning [{:keys [:home-x :home-y] :as entity} screen]
+  (let [cur-pos (vector-2 (:x entity) (:y entity))
+        target-pos (vector-2 home-x home-y)
+        dir-vec (vector-2! target-pos :sub cur-pos)
+        l (vector-2! dir-vec :len)
+        ;delta-vec (vector-2! dir-vec :set-length returning-speed)
+        ]
+    (vector-2! dir-vec :set-length returning-speed)
+    (cond (< l returning-speed)
+          (do
+            (body-position! entity home-x home-y 0)
+            (assoc entity :movement-state (state-machine (:movement-state entity))))
+          :else
+          (do
+            (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
+            entity))
+    ))
