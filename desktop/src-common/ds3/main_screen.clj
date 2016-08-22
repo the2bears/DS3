@@ -2,6 +2,7 @@
   (:require [play-clj.core :refer [add-timer! bundle clear! defscreen game key-code key-pressed? orthographic render! screen! stage update!]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [ds3.common :as c]
+            [ds3.bomb :as bomb]
             [ds3.ship :as ship]
             [ds3.enemy :as enemy]
             [ds3.bullet :as bullet]
@@ -43,9 +44,10 @@
                  (step! screen)
                  (check-for-input screen)
                  (handle-all-entities screen)
+                 ;(bomb/animate-bomb screen)
                  (sort-by :render-layer)
                  (render! screen))]
-        (.render debug-renderer world (.combined camera))
+        ;(.render debug-renderer world (.combined camera))
         entities)))
 
   :on-begin-contact
@@ -74,15 +76,17 @@
 
 
 (defn handle-all-entities [screen entities]
-  (let [entities (->> entities
-       (map (fn [entity]
-              (cond (:ship? entity) (ship/move-player-tick entity)
-                    (:enemy? entity) (enemy/move entity screen)
-                    (:explosion? entity) (exp/handle-explosion entity)
-                    :else entity)))
-       )]
-    ;(if (not-any? :enemy? entities)
-    ;  (prn :level-score (:level-score screen)))
+  (let [entities
+        (->> entities
+             (map (fn [entity]
+                    (cond (:ship? entity) (ship/move-player-tick entity)
+                          (:enemy? entity) (-> entity
+                                               (enemy/move screen)
+                                               (enemy/drop-bomb screen))
+                          (:explosion? entity) (exp/handle-explosion entity)
+                          (:bomb? entity) (bomb/animate-bomb screen entity)
+                          :else entity)))
+             )]
     entities
     ))
 

@@ -11,6 +11,7 @@
 (def ^:const hook-far-x (c/screen-to-world (* c/game-width (/ 100.0 800.0))));x padding on far side
 (def ^:const hook-width-near-x (c/screen-to-world (- c/game-width (* c/game-width (/ 50.0 800.0)))));button hook distance, and distance on close side
 (def ^:const hook-width-far-x (c/screen-to-world (- c/game-width (* c/game-width (/ 100.0 800.0)))));x padding on far side
+(def ^:const bottom-y (c/screen-to-world (* c/game-width (/ 100.0 800.0))))
 
 (defn points-to-vector-2 [p]
   (into [] (map (fn[[x y]]
@@ -26,9 +27,9 @@
         x2 (if x-left hook-width-near-x hook-near-x)
         x3 (if x-left 0 (c/screen-to-world c/game-width))
         ty (- y hook-near-x)
-        dy (/ (- ty hook-near-x) 5)
+        dy (/ (- ty bottom-y) 5)
         points [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
-                [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 hook-near-x][x3 (- hook-far-x)][x3 (- hook-far-x)]]
+                [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 bottom-y][x3 (- hook-far-x)][x3 (- hook-far-x)]]
         points-vec (points-to-vector-2 points)
         spline (b-spline points-vec 3 false)]
     spline))

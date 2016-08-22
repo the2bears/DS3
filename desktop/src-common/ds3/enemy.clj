@@ -1,6 +1,7 @@
 (ns ds3.enemy
   (:require [pixel-ships.core :as psc :refer :all]
             [pixel-ships.bollinger :as bollinger :refer :all]
+            [ds3.bomb :as bomb]
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
@@ -31,7 +32,8 @@
 (def speed (c/screen-to-world 6))
 (def returning-speed (c/screen-to-world 0.6))
 (def d-time (/ 1.0 60))
-returning-speed
+(def bomb-y-min (/ (c/screen-to-world c/game-height) 3.0))
+
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -74,6 +76,19 @@ returning-speed
           (= :returning ms)
           (update-returning entity screen))
     ))
+
+(defn drop-bomb [entity screen]
+  (let [ms (:movement-state entity)]
+    (cond (= :attacking ms)
+          (let [ttb? (and (= (rand-int 120) 0)
+                          (> (:y entity) bomb-y-min))]
+            (if ttb?
+              (let [bomb (bomb/create-bomb screen (:x entity) (:y entity))
+                    pair (list entity bomb)]
+                pair)
+              entity))
+          :else entity
+        )))
 
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
@@ -139,9 +154,7 @@ returning-speed
   (let [cur-pos (vector-2 (:x entity) (:y entity))
         target-pos (vector-2 home-x home-y)
         dir-vec (vector-2! target-pos :sub cur-pos)
-        l (vector-2! dir-vec :len)
-        ;delta-vec (vector-2! dir-vec :set-length returning-speed)
-        ]
+        l (vector-2! dir-vec :len)]
     (vector-2! dir-vec :set-length returning-speed)
     (cond (< l returning-speed)
           (do
