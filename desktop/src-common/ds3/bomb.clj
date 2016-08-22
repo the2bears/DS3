@@ -7,8 +7,8 @@
   (:import [com.badlogic.gdx.physics.box2d Filter]))
 
 
-(def bomb-width (c/screen-to-world 2.0))
-(def bomb-height (c/screen-to-world 3.0))
+(def bomb-width (c/screen-to-world 3.0))
+(def bomb-height (c/screen-to-world 4.0))
 (def bomb-speed (c/screen-to-world -28.0))
 (def half-width (/ bomb-width 2))
 (def half-height (/ bomb-height 2))
@@ -22,8 +22,7 @@
 
 (defn create-bomb-body! [screen x y]
   (let [body (add-body! screen (body-def :dynamic))]
-    (->> ;(circle-shape :set-radius 5)
-         (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bomb-height half-height)) 0)
+    (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bomb-height half-height)) 0)
          (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
          (body! body :create-fixture ))
     (doto body

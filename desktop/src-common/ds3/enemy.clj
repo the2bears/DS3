@@ -83,9 +83,7 @@
           (let [ttb? (and (= (rand-int 120) 0)
                           (> (:y entity) bomb-y-min))]
             (if ttb?
-              (let [bomb (bomb/create-bomb screen (:x entity) (:y entity))
-                    pair (list entity bomb)]
-                pair)
+              (list entity (bomb/create-bomb screen (:x entity) (:y entity)))
               entity))
           :else entity
         )))
