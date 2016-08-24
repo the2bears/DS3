@@ -36,6 +36,7 @@
         bomb2 (texture bomb :set-region 3 0 3 4)
         bomb-animation (animation 0.2 [bomb1 bomb2])
         animation-delta (/ (rand-int 1000) 1000.0)]
+    (sound "bomb2.ogg" :play)
     (assoc bomb1 :bomb-animation (animation 0.1 [bomb1 bomb2]) :total-time animation-delta
       :bomb? true :width bomb-width :height bomb-height :id :bomb :x x :y y
       :render-layer 75 :translate-x 0 :translate-y bomb-height
