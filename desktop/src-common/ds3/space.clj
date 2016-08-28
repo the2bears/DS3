@@ -9,10 +9,8 @@
 (def star-speed-fast (c/screen-to-world -0.4))
 (def star-speeds [star-speed-slow star-speed-med star-speed-fast])
 (def star-alpha 0.75)
-(def star-color-degree 0.75)
-(def star-colors [(color 1 1 1 star-alpha) (color 1 1 star-color-degree star-alpha) (color 1 star-color-degree 1 star-alpha)
-                  (color star-color-degree 1 1 star-alpha) (color star-color-degree star-color-degree  1 star-alpha)
-                  (color star-color-degree 1 star-color-degree star-alpha) (color 1 star-color-degree star-color-degree star-alpha)])
+(def star-color-dim 0.75)
+(def star-color-full 1.0)
 
 (defn create-star-texture [c]
   (let [pix-map (pixmap* 1 1 (pixmap-format :r-g-b-a8888))]
@@ -30,9 +28,11 @@
     :speed (first (shuffle star-speeds))))
 
 (defn create-space []
-  (let [star-textures (map (fn [c] (create-star-texture c)) star-colors)]
+  (let [colors [star-color-dim star-color-full]
+        color-list (rest (for [x colors y colors z colors] (color x y z star-alpha)));create all binary combinations, drop [dim dim dim]
+        star-textures (map (fn [c] (create-star-texture (color c))) color-list)]
     (for [count (range star-count)]
-      (create-star (c/screen-to-world (rand-int c/game-width)) (c/screen-to-world (rand-int c/game-height)) (first (shuffle star-textures)) )
+      (create-star (c/screen-to-world (rand-int c/game-width)) (c/screen-to-world (rand-int c/game-height)) (first (shuffle star-textures)))
       )))
 
 (defn move-star [screen {:keys [:y :speed] :as entity}]
@@ -40,5 +40,4 @@
                     (+ (c/screen-to-world 5) (c/screen-to-world c/game-height))
                     (+ y speed))]
   (assoc entity :y new-y)))
-
 
