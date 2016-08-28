@@ -21,8 +21,8 @@
       (pixmap! :fill-rectangle 0 0 1 1))
     (texture pix-map)))
 
-(defn create-star [x y]
-  (assoc (create-star-texture (first (shuffle star-colors)))
+(defn create-star [x y star]
+  (assoc (texture star)
     :width (c/screen-to-world 1) :height (c/screen-to-world 1)
     :x x :y y
     :star? true :id :star
@@ -30,9 +30,10 @@
     :speed (first (shuffle star-speeds))))
 
 (defn create-space []
-  (for [count (range star-count)]
-    (create-star (c/screen-to-world (rand-int c/game-width)) (c/screen-to-world (rand-int c/game-height)))
-    ))
+  (let [star-textures (map (fn [c] (create-star-texture c)) star-colors)]
+    (for [count (range star-count)]
+      (create-star (c/screen-to-world (rand-int c/game-width)) (c/screen-to-world (rand-int c/game-height)) (first (shuffle star-textures)) )
+      )))
 
 (defn move-star [screen {:keys [:y :speed] :as entity}]
   (let [new-y (if (< (+ y speed) 0)
