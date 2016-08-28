@@ -7,7 +7,9 @@
             [ds3.enemy :as enemy]
             [ds3.bullet :as bullet]
             [ds3.explosion :as exp]
-            [ds3.hud :as hud])
+            [ds3.hud :as hud]
+            [ds3.space :as sp])
+
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
 (declare handle-all-entities create-oob-entity! create-oob-body! check-for-input mark-for-removal)
@@ -25,9 +27,11 @@
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
                     (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
-          pixel-ship (ship/create-ship-entity! screen)]
+          pixel-ship (ship/create-ship-entity! screen)
+          space (sp/create-space)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (enemy/create-enemies screen)
+       space
        pixel-ship]))
 
   :on-render
@@ -85,6 +89,7 @@
                                                (enemy/drop-bomb screen))
                           (:explosion? entity) (exp/handle-explosion entity)
                           (:bomb? entity) (bomb/animate-bomb screen entity)
+                          (:star? entity) (sp/move-star screen entity)
                           :else entity)))
              )]
     entities
