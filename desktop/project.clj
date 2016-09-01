@@ -6,9 +6,6 @@
                  [com.badlogicgames.gdx/gdx-box2d "1.9.3"]
                  [com.badlogicgames.gdx/gdx-box2d-platform "1.9.3"
                   :classifier "natives-desktop"]
-                 [com.badlogicgames.gdx/gdx-bullet "1.9.3"]
-                 [com.badlogicgames.gdx/gdx-bullet-platform "1.9.3"
-                  :classifier "natives-desktop"]
                  [com.badlogicgames.gdx/gdx-platform "1.9.3"
                   :classifier "natives-desktop"]
                  [org.clojure/clojure "1.7.0"]
