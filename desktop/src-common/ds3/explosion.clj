@@ -5,12 +5,13 @@
             [clojure.pprint :refer [pprint]]))
 
 (def ^:const x-offset (c/screen-to-world -3))
-
 (def ^:const y-offset (c/screen-to-world 2))
-
 (def ^:const default-frame-ticks 1)
-
-;(def explosion-sound (sound "explosion.ogg"))
+(def ^:const layer1-width (c/screen-to-world 8))
+(def ^:const layer2-width (c/screen-to-world 7))
+(def ^:const layer3-width (c/screen-to-world 6))
+(def ^:const layer4-width (c/screen-to-world 1))
+(def explosion-textures (atom []))
 
 (defn create-circle-texture [c]
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
@@ -19,20 +20,27 @@
       (pixmap! :fill-circle 8 8 7.5))
     (texture pix-map)))
 
-(defn create-circle-entity [x y width radius c]
+(defn create-circle-entity [width radius c]
   (let [circle-entity (create-circle-texture c)]
     (assoc circle-entity
       :width (c/screen-to-world (* 2 width)) :height (c/screen-to-world (* 2 width))
-      :x (- x (c/screen-to-world  width)) :y (- y (c/screen-to-world width))
       :ttl 12 :frame-ticks default-frame-ticks
       )))
 
 (defn create-explosion [x y]
-  (let [circle-texture (create-circle-entity x y 8 7.5 (color :black))
-        circle-texture2 (create-circle-entity x y 7 6.5 (color :orange))
-        circle-texture3 (create-circle-entity x y 6 5.5 (color :yellow))
-        circle-texture4 (create-circle-entity x y 1 1.5 (color :white))
-        explosion (bundle circle-texture circle-texture2 circle-texture3 circle-texture4)]
+  (let [textures (cond (empty? @explosion-textures)
+                       (reset! explosion-textures
+                               [(create-circle-entity 8 7.5 (color :black))
+                                (create-circle-entity 7 6.5 (color :orange))
+                                (create-circle-entity 6 5.5 (color :yellow))
+                                (create-circle-entity 1 1.5 (color :white))])
+                       :else @explosion-textures)
+        explosion (bundle
+                    (assoc (textures 0) :x (- x layer1-width) :y (- y layer1-width))
+                    (assoc (textures 1) :x (- x layer2-width) :y (- y layer2-width))
+                    (assoc (textures 2) :x (- x layer3-width) :y (- y layer3-width))
+                    (assoc (textures 3) :x (- x layer4-width) :y (- y layer4-width))
+                    )]
     (sound "explosion.ogg" :play)
     (assoc explosion :explosion? true :render-layer 100)))
 
@@ -49,3 +57,6 @@
           (assoc explosion :entities [part1 part2 part3 (assoc part4 :frame-ticks (- frame-ticks 1))])
 
     )))
+
+
+
