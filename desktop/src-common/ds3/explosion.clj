@@ -11,7 +11,8 @@
 (def ^:const layer2-width (c/screen-to-world 7))
 (def ^:const layer3-width (c/screen-to-world 6))
 (def ^:const layer4-width (c/screen-to-world 1))
-(def explosion-textures (atom []))
+(def enemy-explosion-textures (atom []))
+(def ship-explosion-textures (atom []))
 
 (defn create-circle-texture [c]
   (let [pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
@@ -24,37 +25,53 @@
   (let [circle-entity (create-circle-texture c)]
     (assoc circle-entity
       :width (c/screen-to-world (* 2 width)) :height (c/screen-to-world (* 2 width))
-      :ttl 12 :frame-ticks default-frame-ticks
       )))
 
 (defn create-explosion [x y]
-  (let [textures (cond (empty? @explosion-textures)
-                       (reset! explosion-textures
+  (let [textures (cond (empty? @enemy-explosion-textures)
+                       (reset! enemy-explosion-textures
                                [(create-circle-entity 8 7.5 (color :black))
-                                (create-circle-entity 7 6.5 (color :orange))
-                                (create-circle-entity 6 5.5 (color :yellow))
+                                (create-circle-entity 7 6.5 (color :blue))
+                                (create-circle-entity 6 5.5 (color :cyan));
                                 (create-circle-entity 1 1.5 (color :white))])
-                       :else @explosion-textures)
+                       :else @enemy-explosion-textures)
         explosion (bundle
-                    (assoc (textures 0) :x (- x layer1-width) :y (- y layer1-width))
-                    (assoc (textures 1) :x (- x layer2-width) :y (- y layer2-width))
-                    (assoc (textures 2) :x (- x layer3-width) :y (- y layer3-width))
-                    (assoc (textures 3) :x (- x layer4-width) :y (- y layer4-width))
+                    (assoc (textures 0) :x (- x layer1-width) :y (- y layer1-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    (assoc (textures 1) :x (- x layer2-width) :y (- y layer2-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    (assoc (textures 2) :x (- x layer3-width) :y (- y layer3-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    (assoc (textures 3) :x (- x layer4-width) :y (- y layer4-width) :ttl 12 :frame-ticks default-frame-ticks)
                     )]
     (sound "explosion.ogg" :play)
     (assoc explosion :explosion? true :render-layer 100)))
 
+(defn create-ship-explosion [x y]
+  (let [textures (cond (empty? @ship-explosion-textures)
+                       (reset! ship-explosion-textures
+                               [(create-circle-entity 8 7.5 (color :black))
+                                (create-circle-entity 7 6.5 (color :orange))
+                                (create-circle-entity 6 5.5 (color :yellow))
+                                (create-circle-entity 1 1.5 (color :white))])
+                       :else @ship-explosion-textures)
+        explosion (bundle
+                    (assoc (textures 0) :x (- x layer1-width) :y (- y layer1-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    (assoc (textures 1) :x (- x layer2-width) :y (- y layer2-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    (assoc (textures 2) :x (- x layer3-width) :y (- y layer3-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    (assoc (textures 3) :x (- x layer4-width) :y (- y layer4-width) :ttl 12 :frame-ticks default-frame-ticks)
+                    )]
+    (sound "explosion2.ogg" :play)
+    (assoc explosion :explosion? true :render-layer 100)))
+
 (defn handle-explosion [{:keys [entities] :as explosion}]
-  (let [[part1 part2 part3 {:keys [x y width height ttl frame-ticks] :as part4}] entities]
+  (let [[layer1 layer2 layer3 {:keys [x y width height ttl frame-ticks] :as layer4}] entities]
     ;(clojure.pprint/pprint part4)
     ;(prn :x x :y y :width width :height height :ttl ttl :frame-ticks frame-ticks)
     (cond (and (> ttl 0) (= 0 frame-ticks))
-          (assoc explosion :entities [part1 part2 part3 (assoc part4
+          (assoc explosion :entities [layer1 layer2 layer3 (assoc layer4
                                                           :x (- x (c/screen-to-world 0.5)) :y (- y (c/screen-to-world 0.5))
                                                           :width (+ width (c/screen-to-world 1)) :height (+ height (c/screen-to-world 1))
                                                           :ttl (- ttl 1) :frame-ticks default-frame-ticks)])
           (and (> ttl 0) (> frame-ticks 0))
-          (assoc explosion :entities [part1 part2 part3 (assoc part4 :frame-ticks (- frame-ticks 1))])
+          (assoc explosion :entities [layer1 layer2 layer3 (assoc layer4 :frame-ticks (- frame-ticks 1))])
 
     )))
 
