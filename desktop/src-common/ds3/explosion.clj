@@ -58,7 +58,7 @@
                     (assoc (textures 2) :x (- x layer3-width) :y (- y layer3-width) :ttl 12 :frame-ticks default-frame-ticks)
                     (assoc (textures 3) :x (- x layer4-width) :y (- y layer4-width) :ttl 12 :frame-ticks default-frame-ticks)
                     )]
-    (sound "explosion2.ogg" :play)
+    (sound "explosion.ogg" :play)
     (assoc explosion :explosion? true :render-layer 100)))
 
 (defn handle-explosion [{:keys [entities] :as explosion}]

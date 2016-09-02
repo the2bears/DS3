@@ -62,6 +62,8 @@
       (cond
         (:enemy? entity) (enemy/handle-collision entity entity2 screen entities)
         (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
+        (:ship? entity) (ship/handle-collision entity entity2 screen entities)
+        (:ship? entity2) (ship/handle-collision entity2 entity screen entities)
       )))
 
   :on-timer

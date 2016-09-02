@@ -2,6 +2,7 @@
   (:require [pixel-ships.core :as psc :refer :all]
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
+            [ds3.explosion :as exp]
             [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
@@ -103,3 +104,9 @@
     :left (body-position! entity (- (:x entity) speed) (:y entity) (:angle entity))
     )
   entity)
+
+(defn handle-collision [ship other-entity screen entities]
+  (cond (:bomb? other-entity)
+        (do
+          (remove #(= other-entity %) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
+        ))
