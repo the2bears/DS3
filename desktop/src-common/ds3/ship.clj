@@ -6,11 +6,12 @@
             [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
-            [play-clj.math :refer [vector-2]]))
+            [play-clj.math :refer [vector-2 vector-2!]]))
 
 (declare play-clj-color hsv-to-rgb create-ship-body! move draw-rect-pixelmap create-pixel-ship-texture)
 
 (def speed (c/screen-to-world 1.5))
+(def default-r2 (c/screen-to-world 1.0))
 
 (defn create-ship-entity! [screen]
   (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE)]
@@ -24,10 +25,12 @@
 
 (defn create-ship-body!
   [screen]
-  (let [body (add-body! screen (body-def :static))]
-    (->> (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)
+  (let [body (add-body! screen (body-def :dynamic))
+        ship-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
+    (->> ship-shape
          (fixture-def :density 1 :friction 0 :restitution 1 :shape)
          (body! body :create-fixture))
+    (.dispose ship-shape)
     body))
 
 (defn create-pixel-map-list
@@ -107,6 +110,20 @@
 
 (defn handle-collision [ship other-entity screen entities]
   (cond (:bomb? other-entity)
-        (do
-          (remove #(= other-entity %) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
-        ))
+        (remove #(= other-entity %) (conj entities (exp/create-ship-explosion (:x ship) (:y ship))))
+        :else entities))
+
+(defn collide-with-enemy? [screen entities]
+  (let [ship (first (filter #(:ship? %) entities))
+        enemies (filter #(:enemy? %) entities)
+        ship-pos (body! ship :get-position)
+        collide? (fn [ship enemy]
+                   (let [enemy-pos (body! enemy :get-position)
+                         distance (vector-2! ship-pos :dst2 enemy-pos)]
+                     (< distance default-r2)))
+        dead-enemies (filter #(collide? ship %) enemies)
+        collided? (> (count dead-enemies) 0)]
+    (cond collided? (remove #(= (first dead-enemies) %) (conj entities
+                                                              (exp/create-ship-explosion (:x ship) (:y ship))
+                                                              (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies)))))
+          :else entities)))

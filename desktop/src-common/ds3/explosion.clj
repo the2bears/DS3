@@ -63,8 +63,6 @@
 
 (defn handle-explosion [{:keys [entities] :as explosion}]
   (let [[layer1 layer2 layer3 {:keys [x y width height ttl frame-ticks] :as layer4}] entities]
-    ;(clojure.pprint/pprint part4)
-    ;(prn :x x :y y :width width :height height :ttl ttl :frame-ticks frame-ticks)
     (cond (and (> ttl 0) (= 0 frame-ticks))
           (assoc explosion :entities [layer1 layer2 layer3 (assoc layer4
                                                           :x (- x (c/screen-to-world 0.5)) :y (- y (c/screen-to-world 0.5))

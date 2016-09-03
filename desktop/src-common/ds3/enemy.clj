@@ -34,7 +34,6 @@
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 3.0))
 
-
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
     (doto (assoc pixel-ship
@@ -49,10 +48,12 @@
 
 (defn create-enemy-body!
   [screen]
-  (let [body (add-body! screen (body-def :static))]
-    (->> (polygon-shape :set-as-box (c/screen-to-world 3) (c/screen-to-world 3) (vector-2 0 0) 0)
+  (let [body (add-body! screen (body-def :dynamic :bullet true))
+        enemy-shape (polygon-shape :set-as-box (c/screen-to-world 3) (c/screen-to-world 3) (vector-2 0 0) 0)]
+    (->> enemy-shape
          (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
          (body! body :create-fixture))
+    (.dispose enemy-shape)
     body))
 
 

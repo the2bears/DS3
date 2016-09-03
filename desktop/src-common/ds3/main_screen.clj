@@ -48,7 +48,6 @@
                  (step! screen)
                  (check-for-input screen)
                  (handle-all-entities screen)
-                 ;(bomb/animate-bomb screen)
                  (sort-by :render-layer)
                  (render! screen))]
         ;(.render debug-renderer world (.combined camera))
@@ -88,13 +87,13 @@
                     (cond (:ship? entity) (ship/move-player-tick entity)
                           (:enemy? entity) (-> entity
                                                (enemy/move screen)
-                                               (enemy/drop-bomb screen))
+                                               (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
                           (:explosion? entity) (exp/handle-explosion entity)
                           (:bomb? entity) (bomb/animate-bomb screen entity)
                           (:star? entity) (sp/move-star screen entity)
                           :else entity)))
              )]
-    entities
+    (ship/collide-with-enemy? screen entities)
     ))
 
 (defn check-for-input [screen entities]
