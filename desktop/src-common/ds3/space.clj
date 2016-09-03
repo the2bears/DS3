@@ -29,7 +29,7 @@
 
 (defn create-space []
   (let [colors [star-color-dim star-color-full]
-        color-list (rest (for [x colors y colors z colors] (color x y z star-alpha)));create all binary combinations, drop [dim dim dim]
+        color-list (rest (for [x colors y colors z colors] (color x y z star-alpha)));create all binary combinations for r g b, but drop [dim dim dim]
         star-textures (map (fn [c] (create-star-texture (color c))) color-list)]
     (for [count (range star-count)]
       (create-star (c/screen-to-world (rand-int c/game-width)) (c/screen-to-world (rand-int c/game-height)) (first (shuffle star-textures)))
@@ -40,4 +40,3 @@
                     (+ (c/screen-to-world 5) (c/screen-to-world c/game-height))
                     (+ y speed))]
   (assoc entity :y new-y)))
-
