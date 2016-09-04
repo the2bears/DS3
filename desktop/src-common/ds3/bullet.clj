@@ -27,7 +27,8 @@
     (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bullet-height half-height)) 0)
          (fixture-def :density 0 :friction 0 :restitution 0 :is-sensor true :shape)
          (body! body :create-fixture)
-         (modify-filter))
+         ;(modify-filter)
+         )
     (doto body
       (body-position! (- x half-width) (- y half-height) 0)
       (body! :set-linear-velocity 0 bullet-speed))
@@ -44,3 +45,7 @@
       :x (- x half-width) :y (- y half-height)
       :width bullet-width :height (* 2 bullet-height))))
 
+(defn handle-collision [bullet other-entity screen entities]
+  (cond (:oob? other-entity)
+        (remove #(= bullet %) entities)
+        :else entities))

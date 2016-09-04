@@ -36,5 +36,3 @@
         points-vec (points-to-vector-2 points2)
         spline (b-spline points-vec 3 false)]
     spline))
-
-

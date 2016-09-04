@@ -129,6 +129,3 @@
             :else entities))
     entities
     ))
-
-(defn- ship-death [ship screen entities]
-  entities)

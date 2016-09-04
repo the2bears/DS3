@@ -113,7 +113,7 @@
 
 (defn update-home [entity screen]
   (let [on-left (< (:home-x entity) c/half-game-width-world)
-        outward  (:formation-expand screen)
+        outward  (:formation-expand? screen)
         b (cond on-left outward
                 :else (not outward))
         delta-x-fn (cond b -

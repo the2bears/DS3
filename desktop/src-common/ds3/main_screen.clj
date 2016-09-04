@@ -12,7 +12,7 @@
 
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
-(declare handle-all-entities create-oob-entity! create-oob-body! check-for-input mark-for-removal)
+(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities mark-for-removal)
 
 (defscreen main-screen
   :on-show
@@ -23,7 +23,8 @@
                           :world (box-2d 0 0);-2.0)
                           :ticks 0
                           :level-score 0
-                          :formation-expand false
+                          :formation-expand? false
+                          :respawning? false
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
                     (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
@@ -42,12 +43,13 @@
           camera (:camera screen)]
       (clear! 0.1 0.1 0.12 1)
       (cond (= (mod (:ticks screen) c/drift-ticks) 0)
-            (update! screen :formation-expand (not (:formation-expand screen))))
+            (update! screen :formation-expand? (not (:formation-expand? screen))))
       (let [entities
             (->> entities
                  (step! screen)
                  (check-for-input screen)
                  (handle-all-entities screen)
+                 (check-game-status screen)
                  (sort-by :render-layer)
                  (render! screen))]
         ;(.render debug-renderer world (.combined camera))
@@ -63,14 +65,20 @@
         (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
         (:ship? entity) (ship/handle-collision entity entity2 screen entities)
         (:ship? entity2) (ship/handle-collision entity2 entity screen entities)
+        (:bullet? entity) (bullet/handle-collision entity entity2 screen entities)
+        (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)
       )))
 
   :on-timer
   (fn [screen entities]
     (case (:id screen)
-      :refresh-shot (update! screen :fire-when-ready true)
-      nil)
-    nil)
+      :refresh-shot (do
+                      (update! screen :fire-when-ready true)
+                      entities)
+      :spawn-wave (do
+                    (update! screen :respawning? false :formation-expand? false :ticks 0)
+                    (conj entities (enemy/create-enemies screen)))
+      nil))
 
   :on-key-up
   (fn [screen entities]
@@ -79,35 +87,50 @@
     entities)
   )
 
-
 (defn handle-all-entities [screen entities]
-  (let [entities
-        (->> entities
-             (map (fn [entity]
-                    (cond (:ship? entity) (ship/move-player-tick entity)
-                          (:enemy? entity) (-> entity
-                                               (enemy/move screen)
-                                               (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
-                          (:explosion? entity) (exp/handle-explosion entity)
-                          (:bomb? entity) (bomb/animate-bomb screen entity)
-                          (:star? entity) (sp/move-star screen entity)
-                          :else entity)))
-             )]
-    (ship/collide-with-enemy? screen entities)
+  (->> entities
+       (map (fn [entity]
+              (cond (:ship? entity) (ship/move-player-tick entity)
+                    (:enemy? entity) (-> entity
+                                         (enemy/move screen)
+                                         (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
+                    (:explosion? entity) (exp/handle-explosion entity)
+                    (:bomb? entity) (bomb/animate-bomb screen entity)
+                    (:star? entity) (sp/move-star screen entity)
+                    :else entity)))
+       (ship/collide-with-enemy? screen)
+       ))
+
+(defn check-game-status [screen entities]
+  (let [ship (first (filter #(:ship? %) entities))
+        enemies (filter #(:enemy? %) entities)]
+    (cond (and (nil? ship) (every? #(= (:movement-state %) :drifting) enemies))
+          (conj entities (ship/create-ship-entity! screen))
+          (key-pressed? :c) (do
+                              (prn :enemies-count (count enemies))
+                              entities)
+          (and (empty? enemies) (not (:respawning? screen)))
+          (do
+            (add-timer! screen :spawn-wave 3)
+            (update! screen :respawning? true)
+            entities)
+          :else entities)
     ))
 
 (defn check-for-input [screen entities]
-   (cond
-     (and (get screen :fire-when-ready true)
-          (key-pressed? :x)) (let [ship (first (filter #(:ship? %) entities))
-                               x (:x ship)
-                               y (:y ship)]
-                               ;(prn :x x :y y)
-                         (update! screen :fire-when-ready false)
-                         (add-timer! screen :refresh-shot 0.2)
-                         (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
-     :else entities
-     ))
+  (cond
+    (and (get screen :fire-when-ready true)
+         (key-pressed? :x))
+    (if-let [ship (first (filter #(:ship? %) entities))]
+      (let [x (:x ship)
+            y (:y ship)]
+        ;(prn :x x :y y)
+        (update! screen :fire-when-ready false)
+        (add-timer! screen :refresh-shot 0.075);0.2
+        (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
+      entities)
+    :else entities
+    ))
 
 (defn create-oob-entity!
   [screen width height]
