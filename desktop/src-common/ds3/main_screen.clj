@@ -49,6 +49,7 @@
                  (step! screen)
                  (check-for-input screen)
                  (handle-all-entities screen)
+                 (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
                  (check-game-status screen)
                  (sort-by :render-layer)
                  (render! screen))]
@@ -126,7 +127,7 @@
             y (:y ship)]
         ;(prn :x x :y y)
         (update! screen :fire-when-ready false)
-        (add-timer! screen :refresh-shot 0.075);0.2
+        (add-timer! screen :refresh-shot 0.2)
         (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
       entities)
     :else entities
