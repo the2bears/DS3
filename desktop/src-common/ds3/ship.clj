@@ -110,20 +110,25 @@
 
 (defn handle-collision [ship other-entity screen entities]
   (cond (:bomb? other-entity)
-        (remove #(= other-entity %) (conj entities (exp/create-ship-explosion (:x ship) (:y ship))))
+        (remove #(or (= other-entity %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship))))
         :else entities))
 
 (defn collide-with-enemy? [screen entities]
-  (let [ship (first (filter #(:ship? %) entities))
-        enemies (filter #(:enemy? %) entities)
-        ship-pos (body! ship :get-position)
-        collide? (fn [ship enemy]
-                   (let [enemy-pos (body! enemy :get-position)
-                         distance (vector-2! ship-pos :dst2 enemy-pos)]
-                     (< distance default-r2)))
-        dead-enemies (filter #(collide? ship %) enemies)
-        collided? (> (count dead-enemies) 0)]
-    (cond collided? (remove #(= (first dead-enemies) %) (conj entities
-                                                              (exp/create-ship-explosion (:x ship) (:y ship))
-                                                              (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies)))))
-          :else entities)))
+  (if-let [ship (first (filter #(:ship? %) entities))]
+    (let [enemies (filter #(:enemy? %) entities)
+          ship-pos (body! ship :get-position)
+          collide? (fn [ship enemy]
+                     (let [enemy-pos (body! enemy :get-position)
+                           distance (vector-2! ship-pos :dst2 enemy-pos)]
+                       (< distance default-r2)))
+          dead-enemies (filter #(collide? ship %) enemies)
+          collided? (> (count dead-enemies) 0)]
+      (cond collided? (remove #(or (= (first dead-enemies) %) (= ship %)) (conj entities
+                                                                                (exp/create-ship-explosion (:x ship) (:y ship))
+                                                                                (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies)))))
+            :else entities))
+    entities
+    ))
+
+(defn- ship-death [ship screen entities]
+  entities)
