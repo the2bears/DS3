@@ -24,7 +24,7 @@
                           :ticks 0
                           :level-score 0
                           :formation-expand? false
-                          :respawning? false
+                          :wave-respawning? false
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
                     (body-position! 0 (c/screen-to-world c/game-height) 0))
@@ -82,7 +82,7 @@
                       (update! screen :fire-when-ready true)
                       entities)
       :spawn-wave (do
-                    (update! screen :respawning? false :formation-expand? false :ticks 0)
+                    (update! screen :wave-respawning? false :formation-expand? false :ticks 0)
                     (conj entities (enemy/create-enemies screen)))
       nil))
 
@@ -115,10 +115,10 @@
           (key-pressed? :c) (do
                               (prn :enemies-count (count enemies))
                               entities)
-          (and (empty? enemies) (not (:respawning? screen)))
+          (and (empty? enemies) (not (:wave-respawning? screen)))
           (do
             (add-timer! screen :spawn-wave 3)
-            (update! screen :respawning? true)
+            (update! screen :wave-respawning? true)
             entities)
           :else entities)
     ))

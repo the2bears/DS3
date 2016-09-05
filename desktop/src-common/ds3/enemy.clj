@@ -33,6 +33,8 @@
 (def returning-speed (c/screen-to-world 0.6))
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 3.0))
+(def default-ticks-first-bomb 30)
+(def default-ticks-next-bomb 120)
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -43,7 +45,8 @@
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
             :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0)
-            :movement-state starting-state)
+            :movement-state starting-state
+            :ticks-to-bomb (rand-int default-ticks-first-bomb))
         (body! :set-linear-velocity 0 0))))
 
 (defn create-enemy-body!
@@ -81,11 +84,11 @@
 (defn drop-bomb [entity screen]
   (let [ms (:movement-state entity)]
     (cond (= :attacking ms)
-          (let [ttb? (and (= (rand-int 120) 0)
+          (let [ttb? (and (<= (:ticks-to-bomb entity) 0)
                           (> (:y entity) bomb-y-min))]
             (if ttb?
-              (list entity (bomb/create-bomb screen (:x entity) (:y entity)))
-              entity))
+              (list (assoc entity :ticks-to-bomb default-ticks-next-bomb) (bomb/create-bomb screen (:x entity) (:y entity)))
+              (assoc entity :ticks-to-bomb (- (:ticks-to-bomb entity) 1))))
           :else entity
         )))
 

@@ -9,12 +9,10 @@
 
 (def bomb-width (c/screen-to-world 3.0))
 (def bomb-height (c/screen-to-world 4.0))
-(def bomb-speed (c/screen-to-world -28.0))
+(def bomb-speed (c/screen-to-world -60.0))
 (def half-width (/ bomb-width 2))
 (def half-height (/ bomb-height 2))
 (def bomb-textures (atom []))
-
-
 
 (defn animate-bomb [screen {:keys [bomb-animation total-time] :as entity}]
   (let [delta (:total-time screen)
