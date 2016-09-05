@@ -27,10 +27,13 @@
                           :respawning? false
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
-                    (body-position! 0 (c/screen-to-world (- c/game-height 10)) 0))
+                    (body-position! 0 (c/screen-to-world c/game-height) 0))
+          bottom-oob (doto (create-oob-entity! screen (c/screen-to-world (+ c/game-width 20)) (c/screen-to-world 20))
+                    (body-position! (c/screen-to-world (- 10)) (c/screen-to-world (- 20)) 0))
           pixel-ship (ship/create-ship-entity! screen)
           space (sp/create-space)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
+       (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        (enemy/create-enemies screen)
        space
        pixel-ship]))
@@ -68,6 +71,8 @@
         (:ship? entity2) (ship/handle-collision entity2 entity screen entities)
         (:bullet? entity) (bullet/handle-collision entity entity2 screen entities)
         (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)
+        (:bomb? entity) (bomb/handle-collision entity entity2 screen entities)
+        (:bomb? entity2) (bomb/handle-collision entity2 entity screen entities)
       )))
 
   :on-timer

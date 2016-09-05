@@ -12,6 +12,8 @@
 (def bomb-speed (c/screen-to-world -28.0))
 (def half-width (/ bomb-width 2))
 (def half-height (/ bomb-height 2))
+(def bomb-textures (atom []))
+
 
 
 (defn animate-bomb [screen {:keys [bomb-animation total-time] :as entity}]
@@ -41,3 +43,8 @@
       :bomb? true :width bomb-width :height bomb-height :id :bomb :x x :y y
       :render-layer 75 :translate-x 0 :translate-y bomb-height
       :body (create-bomb-body! screen x y))))
+
+(defn handle-collision [bomb other-entity screen entities]
+  (cond (:oob? other-entity)
+        (remove #(= bomb %) entities)
+        :else entities))
