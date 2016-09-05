@@ -14,6 +14,7 @@
 (def bullet-speed (c/screen-to-world 240));2400?
 (def half-width (/ bullet-width 2))
 (def half-height (/ bullet-height 2))
+(def bullet-texture (atom nil))
 
 (defn modify-filter [fixture]
   (let [bullet-filter (fixture! fixture :get-filter-data)]
@@ -36,7 +37,10 @@
 
 (defn create-bullet!
   [screen x y]
-  (let [bullet (texture "shot.png" :set-region 0 0 2 4)]
+  (let [bullet (cond (nil? @bullet-texture) (do
+                                              (reset! bullet-texture (texture "shot.png" :set-region 0 0 2 4))
+                                              @bullet-texture)
+                     :else @bullet-texture)]
     (sound "shot3.ogg" :play)
     (assoc bullet
       :id :bullet
