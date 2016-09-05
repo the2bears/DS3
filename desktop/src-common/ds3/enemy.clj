@@ -87,7 +87,7 @@
           (let [ttb? (and (<= (:ticks-to-bomb entity) 0)
                           (> (:y entity) bomb-y-min))]
             (if ttb?
-              (list (assoc entity :ticks-to-bomb default-ticks-next-bomb) (bomb/create-bomb screen (:x entity) (:y entity)))
+              (list (assoc entity :ticks-to-bomb default-ticks-next-bomb) (bomb/create-bomb screen (:x entity) (- (:y entity) (c/screen-to-world 6))))
               (assoc entity :ticks-to-bomb (- (:ticks-to-bomb entity) 1))))
           :else entity
         )))

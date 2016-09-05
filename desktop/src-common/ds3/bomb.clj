@@ -21,13 +21,15 @@
     (merge entity (animation->texture time-keeper bomb-animation))))
 
 (defn create-bomb-body! [screen x y]
-  (let [body (add-body! screen (body-def :dynamic))]
+  (let [body (add-body! screen (body-def :dynamic))
+        ship-x (:ship-x screen)
+        bomb-x (* 0.3 (- ship-x x))]
     (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bomb-height half-height)) 0)
          (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
          (body! body :create-fixture ))
     (doto body
       (body-position! x y 0)
-      (body! :set-linear-velocity 0 bomb-speed))
+      (body! :set-linear-velocity bomb-x bomb-speed))
     body))
 
 (defn create-bomb [screen x y]

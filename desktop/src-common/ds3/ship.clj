@@ -3,7 +3,7 @@
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
             [ds3.explosion :as exp]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format]]
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format update!]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
@@ -90,22 +90,24 @@
 
     ))))
 
-(defn move-player-tick [entity]
+(defn move-player-tick [screen entity]
   (if (:ship? entity)
     (cond
       (key-pressed? :dpad-right)
-        (move entity :right)
+        (move screen entity :right)
       (key-pressed? :dpad-left)
-        (move entity :left)
+        (move screen entity :left)
      :else entity)
     entity)
   )
 
-(defn move [entity direction]
-  (case direction
-    :right (body-position! entity (+ (:x entity) speed) (:y entity) (:angle entity))
-    :left (body-position! entity (- (:x entity) speed) (:y entity) (:angle entity))
-    )
+(defn move [screen {:keys [:x :y :angle] :as entity} direction]
+  (let [mv-fn (case direction
+                :right +
+                :left -)
+        x (mv-fn x speed)]
+    (body-position! entity x y angle)
+    (update! screen :ship-x x))
   entity)
 
 (defn handle-collision [ship other-entity screen entities]

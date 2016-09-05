@@ -96,7 +96,7 @@
 (defn handle-all-entities [screen entities]
   (->> entities
        (map (fn [entity]
-              (cond (:ship? entity) (ship/move-player-tick entity)
+              (cond (:ship? entity) (ship/move-player-tick screen entity)
                     (:enemy? entity) (-> entity
                                          (enemy/move screen)
                                          (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
