@@ -1,6 +1,7 @@
 (ns ds3.fps
   (:require [play-clj.core :refer [color defscreen game orthographic render! stage update!]]
-            [play-clj.ui :refer [label label!]]
+            [play-clj.g2d :refer [bitmap-font]]
+            [play-clj.ui :refer [label label! style]]
             [ds3.common :as c]))
 
 (defscreen fps-screen
@@ -9,7 +10,7 @@
     (update! screen
              :renderer (stage)
              :camera (orthographic :set-to-ortho false))
-    (assoc (label "0" (color :white) :set-font-scale 1.0 1.0)
+    (assoc (label "0" (style :label (bitmap-font "arcade20.fnt") (color :white)) )
       :id :fps
       :x 5
       )

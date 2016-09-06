@@ -4,9 +4,10 @@
             [ds3.bomb :as bomb]
             [ds3.common :as c]
             [ds3.explosion :as exp]
+            [ds3.hud :as hud]
             [ds3.ship :as ship]
             [ds3.splines :as splines]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* update! x y]]
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
@@ -29,7 +30,7 @@
 
 (def starting-state :drifting)
 
-(def speed (c/screen-to-world 6))
+(def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 3.0))
@@ -94,25 +95,26 @@
 
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
-        (cond (= :drifting (:movement-state enemy))
-              (do
-                (let [entities (->> entities
-                                    (map (fn [entity]
-                                           (cond (= enemy entity)
-                                                 (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
-                                                   :spline (splines/calibrate-spline (:x entity) (:y entity)))
-                                                 :else entity)))
-                                    )]
-                  (remove #(= other-entity %) entities)))
-              (= :attacking (:movement-state enemy))
-              (do
-                (update! screen :level-score (+ (:level-score screen) (:score enemy)))
-                ;(screen! hud/hud-screen :on-update-score :score (+ (:level-score screen) (:score enemy)))
-                (remove #(or (= enemy %)
-                             (= other-entity %))
-                        (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
-              :else nil
-              )))
+        (if-let [x (:x enemy)]
+          (cond (= :drifting (:movement-state enemy))
+                (do
+                  (let [entities (->> entities
+                                      (map (fn [entity]
+                                             (cond (= enemy entity)
+                                                   (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
+                                                     :spline (splines/calibrate-spline x (:y entity)))
+                                                   :else entity)))
+                                      )]
+                    (remove #(= other-entity %) entities)))
+                (= :attacking (:movement-state enemy))
+                (do
+                  (update! screen :level-score (+ (:level-score screen) (:score enemy)))
+                  (screen! hud/hud-screen :on-update-score :p1-score (+ (:level-score screen) (:score enemy)))
+                  (remove #(or (= enemy %)
+                               (= other-entity %))
+                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
+                :else nil
+                ))))
 
 (defn update-home [entity screen]
   (let [on-left (< (:home-x entity) c/half-game-width-world)

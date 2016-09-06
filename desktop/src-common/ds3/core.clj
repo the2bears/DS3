@@ -10,5 +10,5 @@
 (defgame ds3-game
   :on-create
   (fn [this]
-    (set-screen! this main/main-screen fps/fps-screen); hud/hud-screen)
+    (set-screen! this main/main-screen fps/fps-screen hud/hud-screen)
     (graphics! :set-v-sync true)))
