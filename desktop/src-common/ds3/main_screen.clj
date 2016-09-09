@@ -22,7 +22,8 @@
                           :camera (orthographic :set-to-ortho false (c/screen-to-world c/game-width) (c/screen-to-world c/game-height))
                           :world (box-2d 0 0);-2.0)
                           :ticks 0
-                          :level-score 0
+                          :p1-level-score 0
+                          :p1-lives 3
                           :formation-expand? false
                           :wave-respawning? false
                           :debug-renderer (Box2DDebugRenderer.))
@@ -110,7 +111,11 @@
 (defn check-game-status [screen entities]
   (let [ship (first (filter #(:ship? %) entities))
         enemies (filter #(:enemy? %) entities)]
-    (cond (and (nil? ship) (every? #(= (:movement-state %) :drifting) enemies))
+    (cond (<= (:p1-lives screen) 0)
+          (do
+            ;(prn :game-over)
+            entities)
+          (and (nil? ship) (every? #(= (:movement-state %) :drifting) enemies))
           (conj entities (ship/create-ship-entity! screen))
           (key-pressed? :c) (do
                               (prn :enemies-count (count enemies))

@@ -19,8 +19,6 @@
                :renderer (stage)
                :camera (orthographic :set-to-ortho false)
                :p1-score 0)
-      (prn :hud :height (game :height) :width (game :width))
-      (prn :ps-1up :height (label! p1-1up :get-pref-height) :width (label! p1-1up :get-pref-width))
       [(assoc p1-1up :id :p1-1up :x p1-1up-x :y (- (game :height) p1-1up-y))
        (assoc p1-score :id :p1-score :x p1-score-x :y (- (game :height) p1-score-y))]
       ))
@@ -47,7 +45,16 @@
       )
     nil)
 
+  :on-update-lives
+  (fn [screen entities]
+    (let [lives (:p1-lives screen)]
+      (update! screen :p1-lives lives)
+      (prn :lives lives)
+      )
+    nil)
+
   :on-reset-score
   (fn [screen entities]
     (update! screen :p1-score 0)
     nil))
+

@@ -108,8 +108,8 @@
                     (remove #(= other-entity %) entities)))
                 (= :attacking (:movement-state enemy))
                 (do
-                  (update! screen :level-score (+ (:level-score screen) (:score enemy)))
-                  (screen! hud/hud-screen :on-update-score :p1-score (+ (:level-score screen) (:score enemy)))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (screen! hud/hud-screen :on-update-score :p1-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
                                (= other-entity %))
                           (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
