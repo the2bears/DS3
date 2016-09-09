@@ -3,7 +3,6 @@
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
             [ds3.explosion :as exp]
-            [ds3.hud :as hud]
             [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update!]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
@@ -114,8 +113,6 @@
 (defn handle-collision [ship other-entity screen entities]
   (cond (:bomb? other-entity)
         (let [lives (- (:p1-lives screen) 1)]
-          (update! screen :p1-lives lives)
-          (screen! hud/hud-screen :on-update-lives :p1-lives lives)
           (remove #(or (= other-entity %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
         :else entities))
 

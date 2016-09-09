@@ -110,13 +110,17 @@
 
 (defn check-game-status [screen entities]
   (let [ship (first (filter #(:ship? %) entities))
-        enemies (filter #(:enemy? %) entities)]
+        enemies (filter #(:enemy? %) entities)
+        lives (:p1-lives screen)]
+    (screen! hud/hud-screen :on-update-lives :p1-lives lives)
     (cond (<= (:p1-lives screen) 0)
           (do
             ;(prn :game-over)
             entities)
-          (and (nil? ship) (every? #(= (:movement-state %) :drifting) enemies))
-          (conj entities (ship/create-ship-entity! screen))
+          (and (nil? ship) (every? #(= (:movement-state %) :drifting) enemies) (> lives 1));lives hasn't had one subtracted yet
+          (do
+            (update! screen :p1-lives (- lives 1))
+            (conj entities (ship/create-ship-entity! screen)))
           (key-pressed? :c) (do
                               (prn :enemies-count (count enemies))
                               entities)

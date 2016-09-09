@@ -4,6 +4,8 @@
             [play-clj.ui :refer [label label! style]]
             [ds3.common :as c]))
 
+(declare add-mini-ships count-mini-ships)
+
 (def y-padding 4.0)
 
 (defscreen hud-screen
@@ -33,6 +35,7 @@
                          (let [p1-score-x (- (/ (game :width) 4) (- (label! entity :get-pref-width) 20))]
                            (assoc entity :x p1-score-x)))
              entity))
+         (count-mini-ships screen)
          (render! screen)))
 
 
@@ -48,13 +51,30 @@
   :on-update-lives
   (fn [screen entities]
     (let [lives (:p1-lives screen)]
-      (update! screen :p1-lives lives)
-      (prn :lives lives)
-      )
+      (update! screen :p1-lives lives))
     nil)
 
   :on-reset-score
   (fn [screen entities]
     (update! screen :p1-score 0)
     nil))
+
+(defn count-mini-ships [screen entities]
+  (let [actual-count (count (filter #(:mini-ship? %) entities))
+        expected-count (- (:p1-lives screen) 1)]
+    (cond (and (> expected-count -1) (not= expected-count actual-count))
+          (->> entities
+               (filter #(not (:mini-ship? %)))
+               (add-mini-ships expected-count))
+          :else entities)))
+
+(defn add-mini-ships [n entities]
+  (let [ships (for [ship (range n)
+                    :let [x (- 600 (* ship 32))]]
+                (assoc (ds3.ship/create-pixel-ship-texture (Integer/MAX_VALUE))
+                  :width 32 :height 32
+                  :x x :y 5
+                  :id :pixel-ship :mini-ship? true))]
+    (prn :add-mini-ships)
+    (flatten (conj entities ships))))
 
