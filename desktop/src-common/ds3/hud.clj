@@ -4,9 +4,10 @@
             [play-clj.ui :refer [label label! style]]
             [ds3.common :as c]))
 
-(declare add-mini-ships count-mini-ships)
+(declare add-mini-ships count-mini-ships pad-score)
 
 (def y-padding 4.0)
+(def score-digits 9)
 
 (defscreen hud-screen
   :on-show
@@ -14,7 +15,7 @@
     (let [p1-1up (label "1UP" (style :label (bitmap-font "arcade20.fnt") (color :yellow)))
           p1-1up-x (- (/ (game :width) 4) (label! p1-1up :get-pref-width))
           p1-1up-y (+ y-padding (label! p1-1up :get-pref-height))
-          p1-score (label "0" (style :label (bitmap-font "arcade20.fnt") (color :white)))
+          p1-score (label (pad-score 0) (style :label (bitmap-font "arcade20.fnt") (color :white)))
           p1-score-x (- (/ (game :width) 4) (- (label! p1-score :get-pref-width) 20))
           p1-score-y (* p1-1up-y 2)]
       (update! screen
@@ -30,10 +31,9 @@
   (fn [screen entities]
     (->> (for [entity entities]
            (case (:id entity)
-             :p1-score (do
-                         (doto entity (label! :set-text (str (:p1-score screen))))
-                         (let [p1-score-x (- (/ (game :width) 4) (- (label! entity :get-pref-width) 20))]
-                           (assoc entity :x p1-score-x)))
+             :p1-score (let [score (:p1-score screen)]
+                         (label! entity :set-text (pad-score score))
+                         entity)
              entity))
          (count-mini-ships screen)
          (render! screen)))
@@ -78,3 +78,6 @@
     (prn :add-mini-ships)
     (flatten (conj entities ships))))
 
+(defn pad-score [score]
+  (let [padding (- score-digits (count (str score)))]
+    (str (apply str (repeat padding " ")) score)))

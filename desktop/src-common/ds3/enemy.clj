@@ -4,7 +4,6 @@
             [ds3.bomb :as bomb]
             [ds3.common :as c]
             [ds3.explosion :as exp]
-            [ds3.hud :as hud]
             [ds3.ship :as ship]
             [ds3.splines :as splines]
             [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
@@ -109,7 +108,6 @@
                 (= :attacking (:movement-state enemy))
                 (do
                   (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
-                  (screen! hud/hud-screen :on-update-score :p1-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
                                (= other-entity %))
                           (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))

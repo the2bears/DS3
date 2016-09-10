@@ -113,6 +113,7 @@
         enemies (filter #(:enemy? %) entities)
         lives (:p1-lives screen)]
     (screen! hud/hud-screen :on-update-lives :p1-lives lives)
+    (screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen))
     (cond (<= (:p1-lives screen) 0)
           (do
             ;(prn :game-over)
