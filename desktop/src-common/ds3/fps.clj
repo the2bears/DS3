@@ -1,25 +1,28 @@
 (ns ds3.fps
   (:require [play-clj.core :refer [color defscreen game orthographic render! stage update!]]
-            [play-clj.g2d :refer [bitmap-font]]
+            [play-clj.g2d :refer [bitmap-font bitmap-font!]]
             [play-clj.ui :refer [label label! style]]
-            [ds3.common :as c]))
+            [ds3.common :as c])
+   (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]))
 
 (defscreen fps-screen
   :on-show
   (fn [screen entities]
     (update! screen
              :renderer (stage)
-             :camera (orthographic :set-to-ortho false))
-    (assoc (label "0" (style :label (bitmap-font "arcade20.fnt") (color :white)) )
-      :id :fps
-      :x 5
-      )
-    )
+             :camera (orthographic :set-to-ortho false)
+             :font (bitmap-font "arcade20.fnt"))
+    entities)
 
   :on-render
   (fn [screen entities]
-    (->> (for [entity entities]
-           (case (:id entity)
-             :fps (doto entity (label! :set-text (str (game :fps))))
-             entity))
+    (let [renderer (:renderer screen)
+          ^Batch batch (.getBatch renderer)
+          arcade-fnt (:font screen)
+          fps (game :fps)]
+      (.begin batch)
+      (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
+      (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str fps) 5.0 24.0)
+      (.end batch))
+    (->> entities
          (render! screen))))

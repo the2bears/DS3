@@ -1,43 +1,52 @@
 (ns ds3.hud
-  (:require [play-clj.core :refer [color defscreen game orthographic render! screen! stage update!]]
-            [play-clj.g2d :refer [bitmap-font]]
-            [play-clj.ui :refer [label label! style]]
-            [ds3.common :as c]))
+  (:require [play-clj.core :refer [add-timer! clear! color defscreen game orthographic render! screen! stage update!]]
+            [play-clj.g2d :refer [bitmap-font bitmap-font!]]
+            [ds3.common :as c])
+  (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]))
 
 (declare add-mini-ships count-mini-ships pad-score)
 
-(def y-padding 4.0)
+(def ^:const y-padding 4.0)
 (def score-digits 9)
+(def ^:const p1-1up-x 108.0)
+(def ^:const p1-1up-y 4.0); 28.0);from top
+(def ^:const p1-score-x 8.0)
+(def ^:const p1-score-y 28.0)
+(def ^:const game-over-x 246.0)
+(def ^:const game-over-y 420.0)
+
 
 (defscreen hud-screen
   :on-show
   (fn [screen entities]
-    (let [p1-1up (label "1UP" (style :label (bitmap-font "arcade20.fnt") (color :yellow)))
-          p1-1up-x (- (/ (game :width) 4) (label! p1-1up :get-pref-width))
-          p1-1up-y (+ y-padding (label! p1-1up :get-pref-height))
-          p1-score (label (pad-score 0) (style :label (bitmap-font "arcade20.fnt") (color :white)))
-          p1-score-x (- (/ (game :width) 4) (- (label! p1-score :get-pref-width) 20))
-          p1-score-y (* p1-1up-y 2)]
       (update! screen
                :renderer (stage)
                :camera (orthographic :set-to-ortho false)
-               :p1-score 0)
-      [(assoc p1-1up :id :p1-1up :x p1-1up-x :y (- (game :height) p1-1up-y))
-       (assoc p1-score :id :p1-score :x p1-score-x :y (- (game :height) p1-score-y))]
-      ))
-
+               :p1-score 0
+               :render? false
+               :render-delay 5
+               :game-over false
+               :font (bitmap-font "arcade20.fnt"))
+    entities)
 
   :on-render
   (fn [screen entities]
-    (->> (for [entity entities]
-           (case (:id entity)
-             :p1-score (let [score (:p1-score screen)]
-                         (label! entity :set-text (pad-score score))
-                         entity)
-             entity))
+    (let [renderer (:renderer screen)
+          ^Batch batch (.getBatch renderer)
+          arcade-fnt (:font screen)]
+      (.begin batch)
+      (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
+      (bitmap-font! ^BitmapFont arcade-fnt :draw batch "1UP" p1-1up-x (- (game :height) y-padding))
+      (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
+      (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str (pad-score (:p1-score screen))) p1-score-x (- (game :height) p1-score-y))
+      (when (:game-over screen)
+        (do
+          (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :red))
+          (bitmap-font! ^BitmapFont arcade-fnt :draw batch "GAME OVER" game-over-x game-over-y)))
+      (.end batch))
+    (->> entities
          (count-mini-ships screen)
          (render! screen)))
-
 
   ;Called by the main_screen, passing in :score
   :on-update-score
@@ -75,7 +84,6 @@
                   :width 32 :height 32
                   :x x :y 5
                   :id :pixel-ship :mini-ship? true))]
-    (prn :add-mini-ships)
     (flatten (conj entities ships))))
 
 (defn pad-score [score]

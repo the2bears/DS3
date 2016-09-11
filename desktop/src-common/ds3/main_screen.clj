@@ -91,8 +91,7 @@
   (fn [screen entities]
     (cond (= (:key screen) (key-code :x))
           (update! screen :fire-when-ready true))
-    entities)
-  )
+    entities))
 
 (defn handle-all-entities [screen entities]
   (->> entities
