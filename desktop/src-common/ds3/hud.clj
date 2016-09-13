@@ -66,7 +66,11 @@
   :on-reset-score
   (fn [screen entities]
     (update! screen :p1-score 0)
-    nil))
+    nil)
+
+  :on-game-over
+  (fn [screen entities]
+    (update! screen :game-over true)))
 
 (defn count-mini-ships [screen entities]
   (let [actual-count (count (filter #(:mini-ship? %) entities))

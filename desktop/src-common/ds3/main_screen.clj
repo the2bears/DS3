@@ -31,6 +31,7 @@
                           :ticks 0
                           :p1-level-score 0
                           :p1-lives 3
+                          :game-state :in-game
                           :formation-expand? false
                           :wave-respawning? false
                           :debug-renderer (Box2DDebugRenderer.))
@@ -120,14 +121,18 @@
         lives (:p1-lives screen)]
     (screen! hud/hud-screen :on-update-lives :p1-lives lives)
     (screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen))
-    (cond (<= (:p1-lives screen) 0)
+    (cond (and (nil? ship)
+               (= :in-game (:game-state screen))
+               (every? #(= (:movement-state %) :drifting) enemies)
+               (> lives 0));lives hasn't had one subtracted yet
           (do
-            ;(prn :game-over)
-            entities)
-          (and (nil? ship) (every? #(= (:movement-state %) :drifting) enemies) (> lives 1));lives hasn't had one subtracted yet
-          (do
-            (update! screen :p1-lives (- lives 1))
-            (conj entities (ship/create-ship-entity! screen)))
+            (let [lives (- lives 1)]
+              (update! screen :p1-lives lives)
+              (cond (= 0 lives) (do
+                                  (update! screen :game-state :game-over)
+                                  (screen! hud/hud-screen :on-game-over)
+                                  entities)
+                    :else (conj entities (ship/create-ship-entity! screen)))))
           (key-pressed? :c) (do
                               (prn :enemies-count (count enemies))
                               entities)
