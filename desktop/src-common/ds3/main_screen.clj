@@ -1,5 +1,5 @@
 (ns ds3.main-screen
-  (:require [play-clj.core :refer [add-timer! bundle clear! defscreen game key-code key-pressed? orthographic render! screen! stage update!]]
+  (:require [play-clj.core :refer [add-timer! bundle clear! defgame defscreen game graphics! key-code key-pressed? orthographic render! screen! set-screen! stage update!]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! box-2d chain-shape first-entity fixture-def second-entity step!]]
             [ds3.common :as c]
             [ds3.bomb :as bomb]
@@ -12,7 +12,14 @@
 
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
-(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities mark-for-removal)
+(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities main-screen mark-for-removal)
+
+(defgame ds3-game
+  :on-create
+  (fn [this]
+    (set-screen! this main-screen hud/hud-screen)
+    (graphics! :set-v-sync true)))
+
 
 (defscreen main-screen
   :on-show
