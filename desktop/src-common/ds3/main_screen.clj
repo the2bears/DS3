@@ -130,17 +130,13 @@
        (ship/collide-with-enemy? screen)
        ))
 
-(defn handle-game-over [screen entities]
-  (update! screen :game-state :game-over)
-  (screen! hud/hud-screen :on-update-game-state :game-state :game-over)
-  entities)
-
 (defn check-game-status [screen entities]
   (let [ship (first (filter #(:ship? %) entities))
         enemies (filter #(:enemy? %) entities)
         lives (:p1-lives screen)]
     (screen! hud/hud-screen :on-update-lives :p1-lives lives)
     (screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen))
+    (screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
     (cond (and (nil? ship)
                (= :in-game (:game-state screen))
                (every? #(= (:movement-state %) :drifting) enemies)
@@ -148,11 +144,10 @@
           (do
             (let [lives (- lives 1)]
               (update! screen :p1-lives lives)
-              (cond (= 0 lives) (handle-game-over screen entities)
+              (cond (= 0 lives) (do
+                                  (update! screen :game-state :game-over)
+                                  entities)
                     :else (conj entities (ship/create-ship-entity! screen)))))
-          (key-pressed? :c) (do
-                              (prn :enemies-count (count enemies))
-                              entities)
           (and (empty? enemies) (not (:wave-respawning? screen)))
           (do
             (add-timer! screen :spawn-wave 3)

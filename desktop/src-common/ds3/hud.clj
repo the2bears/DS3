@@ -39,10 +39,14 @@
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch "1UP" p1-1up-x (- (game :height) y-padding))
       (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str (pad-score (:p1-score screen))) p1-score-x (- (game :height) p1-score-y))
-      (when (= :game-over (:game-state screen))
-        (do
-          (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :red))
-          (bitmap-font! ^BitmapFont arcade-fnt :draw batch "GAME OVER" game-over-x game-over-y)))
+      (cond (= :game-over (:game-state screen))
+            (do
+              (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :red))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "GAME OVER" game-over-x game-over-y))
+            (= :attract-mode (:game-state screen))
+            (do
+              (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "CHOOSE 1 OR 2 PLAYERS" 126.0 game-over-y)))
       (.end batch))
     (->> entities
          (count-mini-ships screen)
