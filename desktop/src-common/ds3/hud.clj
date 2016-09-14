@@ -25,7 +25,7 @@
                :p1-score 0
                :render? false
                :render-delay 5
-               :game-over false
+               :game-state :attract-mode
                :font (bitmap-font "arcade20.fnt"))
     entities)
 
@@ -39,7 +39,7 @@
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch "1UP" p1-1up-x (- (game :height) y-padding))
       (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str (pad-score (:p1-score screen))) p1-score-x (- (game :height) p1-score-y))
-      (when (:game-over screen)
+      (when (= :game-over (:game-state screen))
         (do
           (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :red))
           (bitmap-font! ^BitmapFont arcade-fnt :draw batch "GAME OVER" game-over-x game-over-y)))
@@ -68,9 +68,10 @@
     (update! screen :p1-score 0)
     nil)
 
-  :on-game-over
+  :on-update-game-state
   (fn [screen entities]
-    (update! screen :game-over true)))
+    (let [state (:game-state screen)]
+      (update! screen :game-state state))))
 
 (defn count-mini-ships [screen entities]
   (let [actual-count (count (filter #(:mini-ship? %) entities))

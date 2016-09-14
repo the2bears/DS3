@@ -12,7 +12,8 @@
 
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
-(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities main-screen mark-for-removal)
+(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities main-screen
+         )
 
 (defgame ds3-game
   :on-create
@@ -20,6 +21,7 @@
     (set-screen! this main-screen hud/hud-screen)
     (graphics! :set-v-sync true)))
 
+;game-state values can be :attract-mode :in-game :game-over and ???
 
 (defscreen main-screen
   :on-show
@@ -31,7 +33,7 @@
                           :ticks 0
                           :p1-level-score 0
                           :p1-lives 3
-                          :game-state :in-game
+                          :game-state :attract-mode
                           :formation-expand? false
                           :wave-respawning? false
                           :debug-renderer (Box2DDebugRenderer.))
@@ -95,10 +97,23 @@
                     (conj entities (enemy/create-enemies screen)))
       nil))
 
+  :on-pause
+  (fn [screen entities]
+    (do
+      (prn :on-pause)
+      entities))
+
   :on-key-up
   (fn [screen entities]
-    (cond (= (:key screen) (key-code :x))
-          (update! screen :fire-when-ready true))
+    (case (:game-state screen)
+      :in-game
+      (cond (= (:key screen) (key-code :x))
+            (update! screen :fire-when-ready true))
+      :attract-mode
+      (cond (= (:key screen) (key-code :num-1))
+            (update! screen :game-state :in-game))
+      ;default
+      (prn (:key screen)))
     entities))
 
 (defn handle-all-entities [screen entities]
@@ -115,6 +130,11 @@
        (ship/collide-with-enemy? screen)
        ))
 
+(defn handle-game-over [screen entities]
+  (update! screen :game-state :game-over)
+  (screen! hud/hud-screen :on-update-game-state :game-state :game-over)
+  entities)
+
 (defn check-game-status [screen entities]
   (let [ship (first (filter #(:ship? %) entities))
         enemies (filter #(:enemy? %) entities)
@@ -128,10 +148,7 @@
           (do
             (let [lives (- lives 1)]
               (update! screen :p1-lives lives)
-              (cond (= 0 lives) (do
-                                  (update! screen :game-state :game-over)
-                                  (screen! hud/hud-screen :on-game-over)
-                                  entities)
+              (cond (= 0 lives) (handle-game-over screen entities)
                     :else (conj entities (ship/create-ship-entity! screen)))))
           (key-pressed? :c) (do
                               (prn :enemies-count (count enemies))
@@ -145,19 +162,23 @@
     ))
 
 (defn check-for-input [screen entities]
-  (cond
-    (and (get screen :fire-when-ready true)
-         (key-pressed? :x))
-    (if-let [ship (first (filter #(:ship? %) entities))]
-      (let [x (:x ship)
-            y (:y ship)]
-        ;(prn :x x :y y)
-        (update! screen :fire-when-ready false)
-        (add-timer! screen :refresh-shot 0.2)
-        (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
-      entities)
-    :else entities
-    ))
+  (case (:game-state screen)
+    :in-game
+    (cond
+      (and (get screen :fire-when-ready true)
+           (key-pressed? :x))
+      (if-let [ship (first (filter #(:ship? %) entities))]
+        (let [x (:x ship)
+              y (:y ship)]
+          ;(prn :x x :y y)
+          (update! screen :fire-when-ready false)
+          (add-timer! screen :refresh-shot 0.2)
+          (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
+        entities)
+      :else entities
+      )
+    ;default
+    entities))
 
 (defn create-oob-entity!
   [screen width height]

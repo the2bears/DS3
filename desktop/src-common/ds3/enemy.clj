@@ -34,7 +34,7 @@
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 3.0))
 (def default-ticks-first-bomb 30)
-(def default-ticks-next-bomb 120)
+(def default-ticks-next-bomb 90)
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
