@@ -7,18 +7,18 @@
             [ds3.enemy :as enemy]
             [ds3.bullet :as bullet]
             [ds3.explosion :as exp]
+            [ds3.fps :as fps]
             [ds3.hud :as hud]
             [ds3.space :as sp])
 
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
-(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities main-screen
-         )
+(declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities main-screen on-new-game)
 
 (defgame ds3-game
   :on-create
   (fn [this]
-    (set-screen! this main-screen hud/hud-screen)
+    (set-screen! this main-screen hud/hud-screen fps/fps-screen)
     (graphics! :set-v-sync true)))
 
 ;game-state values can be :attract-mode :in-game :game-over and ???
@@ -45,7 +45,6 @@
           space (sp/create-space)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
-       (enemy/create-enemies screen)
        space
        pixel-ship]))
 
@@ -93,8 +92,14 @@
                       (update! screen :fire-when-ready true)
                       entities)
       :spawn-wave (do
+                    (prn :spawn-wave)
                     (update! screen :wave-respawning? false :formation-expand? false :ticks 0)
                     (conj entities (enemy/create-enemies screen)))
+      :post-game-over (do
+                        (update! screen :p1-level-score 0
+                                 :p1-lives 3
+                                 :game-state :attract-mode)
+                        (conj entities (ship/create-ship-entity! screen)))
       nil))
 
   :on-pause
@@ -108,13 +113,28 @@
     (case (:game-state screen)
       :in-game
       (cond (= (:key screen) (key-code :x))
-            (update! screen :fire-when-ready true))
+            (do
+              (update! screen :fire-when-ready true)
+              entities))
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
-            (update! screen :game-state :in-game))
+            (on-new-game screen entities))
       ;default
-      (prn (:key screen)))
-    entities))
+      (do
+        (prn (:key screen))
+        entities))
+    ))
+
+(defn on-new-game [screen entities]
+  (do (update! screen
+               :ticks 0
+               :p1-level-score 0
+               :p1-lives 3
+               :game-state :in-game
+               :formation-expand? false
+               :wave-respawning? false)
+    (prn :on-new-game)
+    (remove #(:enemy? %) entities)))
 
 (defn handle-all-entities [screen entities]
   (->> entities
@@ -146,9 +166,12 @@
               (update! screen :p1-lives lives)
               (cond (= 0 lives) (do
                                   (update! screen :game-state :game-over)
+                                  (add-timer! screen :post-game-over 5)
                                   entities)
                     :else (conj entities (ship/create-ship-entity! screen)))))
-          (and (empty? enemies) (not (:wave-respawning? screen)))
+          (and (empty? enemies)
+               (not (:wave-respawning? screen))
+               (= :in-game (:game-state screen)))
           (do
             (add-timer! screen :spawn-wave 3)
             (update! screen :wave-respawning? true)
