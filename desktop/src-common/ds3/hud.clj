@@ -7,15 +7,15 @@
 (declare add-mini-ships count-mini-ships pad-score)
 
 (def ^:const y-padding 4.0)
-(def score-digits 9)
-(def ^:const p1-1up-x 108.0)
+(def score-digits 8)
+(def ^:const p1-1up-x 88.0)
 (def ^:const p1-1up-y 4.0); 28.0);from top
-(def ^:const p1-score-x 8.0)
+(def ^:const p1-score-x 28.0)
 (def ^:const p1-score-y 28.0)
 (def ^:const game-over-x 246.0)
 (def ^:const game-over-y 420.0)
 (def ^:const high-score-label-x (/ 472.0 2.0)) ;(* 3 224)
-(def ^:const high-score-x (+ 20.0 (/ 472.0 2.0)))
+(def ^:const high-score-x (/ 472.0 2.0))
 
 (defscreen hud-screen
   :on-show
