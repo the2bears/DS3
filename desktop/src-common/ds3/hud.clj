@@ -14,7 +14,8 @@
 (def ^:const p1-score-y 28.0)
 (def ^:const game-over-x 246.0)
 (def ^:const game-over-y 420.0)
-
+(def ^:const high-score-label-x (/ 472.0 2.0)) ;(* 3 224)
+(def ^:const high-score-x (+ 20.0 (/ 472.0 2.0)))
 
 (defscreen hud-screen
   :on-show
@@ -23,14 +24,14 @@
                :renderer (stage)
                :camera (orthographic :set-to-ortho false)
                :p1-score 0
+               :high-score 0
                :render? false
                :render-delay 5
                :game-state :attract-mode
                :font (bitmap-font "arcade20.fnt"))
     entities)
 
-  :on-render
-  (fn [screen entities]
+  :on-render  (fn [screen entities]
     (let [renderer (:renderer screen)
           ^Batch batch (.getBatch renderer)
           arcade-fnt (:font screen)]
@@ -39,6 +40,10 @@
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch "1UP" p1-1up-x (- (game :height) y-padding))
       (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str (pad-score (:p1-score screen))) p1-score-x (- (game :height) p1-score-y))
+      (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :red))
+      (bitmap-font! ^BitmapFont arcade-fnt :draw batch "HIGH SCORE" high-score-label-x (- (game :height) y-padding))
+      (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
+      (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str (pad-score (:high-score screen))) high-score-x (- (game :height) p1-score-y))
       (cond (= :game-over (:game-state screen))
             (do
               (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :red))
@@ -55,8 +60,9 @@
   ;Called by the main_screen, passing in :score
   :on-update-score
   (fn [screen entities]
-    (let [score (:p1-score screen)]
-      (update! screen :p1-score score)
+    (let [score (:p1-score screen)
+          high-score (:high-score screen)]
+      (update! screen :p1-score score :high-score high-score)
       ;(prn :score score)
       )
     nil)
