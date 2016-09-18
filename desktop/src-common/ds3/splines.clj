@@ -31,19 +31,14 @@
         half-w (if x-left (/ w 2) (- (/ w 2)))
         ty (- y hook-near-x)
         dy (/ (- ty bottom-y) 5)
-        back-n-forth-n-back [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
-                [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 bottom-y][x3 (- hook-far-x)][x3 (- hook-far-x)]]
-        back-n-forth [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
-                [x1 (- ty dy)][x1 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x4 (- hook-far-x)][x4 (- hook-far-x)]]
-        loop-back [[x y][x y][x (+ y hook-near-x)][(alt-x-fn x hook-near-x) (+ y hook-near-x)][(alt-x-fn x hook-near-x) ty]
-                 [(+ x half-w) (- ty (* 2 dy))][(+ x half-w) (- ty (* 6 dy))][x (- ty (* 6 dy))][x (- ty (* 2 dy))]
-                 [(+ x half-w) (- ty (* 1 dy))][(+ x half-w) (- ty (* 7 dy))][(+ x half-w) (- ty (* 7 dy))]]
         which-spline (case row
-                       0 loop-back
-                       1 loop-back
-                       2 back-n-forth
-                       3 back-n-forth
-                       4 back-n-forth-n-back)
+                       (0 1)[[x y][x y][x (+ y hook-near-x)][(alt-x-fn x hook-near-x) (+ y hook-near-x)][(alt-x-fn x hook-near-x) ty]
+                             [(+ x half-w) (- ty (* 2 dy))][(+ x half-w) (- ty (* 6 dy))][x (- ty (* 6 dy))][x (- ty (* 2 dy))]
+                             [(+ x half-w) (- ty (* 1 dy))][(+ x half-w) (- ty (* 7 dy))][(+ x half-w) (- ty (* 7 dy))]]
+                       (2 3) [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
+                              [x1 (- ty dy)][x1 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x4 (- hook-far-x)][x4 (- hook-far-x)]]
+                       4 [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
+                          [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 bottom-y][x3 (- hook-far-x)][x3 (- hook-far-x)]])
         points-vec (points-to-vector-2 which-spline)
         spline (b-spline points-vec 3 false)]
     spline))
