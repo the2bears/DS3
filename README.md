@@ -8,6 +8,7 @@ You'll need my [pixel-ships](https://github.com/the2bears/pixel-ships) library a
 
 A series of small tutorials is planned.
 
+[![Recent Video](http://img.youtube.com/vi/P_t_hvKJaLU/0.jpg)](http://www.youtube.com/watch?v=P_t_hvKJaLU)
 
 ## License
 

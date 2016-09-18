@@ -32,7 +32,7 @@
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def d-time (/ 1.0 60))
-(def bomb-y-min (/ (c/screen-to-world c/game-height) 3.0))
+(def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
 (def default-ticks-next-bomb 90)
 
