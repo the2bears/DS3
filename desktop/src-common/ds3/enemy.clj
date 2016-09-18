@@ -101,7 +101,7 @@
                                       (map (fn [entity]
                                              (cond (= enemy entity)
                                                    (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
-                                                     :spline (splines/calibrate-spline x (:y entity)))
+                                                     :spline (splines/calibrate-spline x (:y entity) (:row entity)))
                                                    :else entity)))
                                       )]
                     (remove #(= other-entity %) entities)))

@@ -17,7 +17,7 @@
   (into [] (map (fn[[x y]]
        (vector-2 x y)) p)))
 
-(defn calibrate-spline [x y]
+(defn calibrate-spline [x y row]
   (let [w (c/screen-to-world c/game-width)
         h (c/screen-to-world c/game-height)
         hw (/ w 2.0)
@@ -31,13 +31,19 @@
         half-w (if x-left (/ w 2) (- (/ w 2)))
         ty (- y hook-near-x)
         dy (/ (- ty bottom-y) 5)
-        points [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
+        back-n-forth-n-back [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
                 [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 bottom-y][x3 (- hook-far-x)][x3 (- hook-far-x)]]
-        points2 [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
+        back-n-forth [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
                 [x1 (- ty dy)][x1 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x4 (- hook-far-x)][x4 (- hook-far-x)]]
-        points3 [[x y][x y][x (+ y hook-near-x)][(alt-x-fn x hook-near-x) (+ y hook-near-x)][(alt-x-fn x hook-near-x) ty]
+        loop-back [[x y][x y][x (+ y hook-near-x)][(alt-x-fn x hook-near-x) (+ y hook-near-x)][(alt-x-fn x hook-near-x) ty]
                  [(+ x half-w) (- ty (* 2 dy))][(+ x half-w) (- ty (* 6 dy))][x (- ty (* 6 dy))][x (- ty (* 2 dy))]
                  [(+ x half-w) (- ty (* 1 dy))][(+ x half-w) (- ty (* 7 dy))][(+ x half-w) (- ty (* 7 dy))]]
-        points-vec (points-to-vector-2 points3)
+        which-spline (case row
+                       0 loop-back
+                       1 loop-back
+                       2 back-n-forth
+                       3 back-n-forth
+                       4 back-n-forth-n-back)
+        points-vec (points-to-vector-2 which-spline)
         spline (b-spline points-vec 3 false)]
     spline))
