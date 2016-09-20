@@ -9,6 +9,10 @@
 
 (def ^:const game-height 288.0)
 
+(def ^:const game-width-adj (screen-to-world 224.0))
+
+(def ^:const game-height-adj (screen-to-world 288.0))
+
 (def ^:const half-game-width-world (screen-to-world (/ game-width 2)))
 
 (def ^:const ship-mp-xoffset 6)

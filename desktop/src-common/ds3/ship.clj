@@ -105,9 +105,12 @@
   (let [mv-fn (case direction
                 :right +
                 :left -)
-        x (mv-fn x speed)]
-    (body-position! entity x y angle)
-    (update! screen :ship-x x))
+        x (mv-fn x speed)
+        x-anchored (cond (> x c/game-width-adj) c/game-width-adj
+                         (< x 0) 0
+                         :else x)]
+    (body-position! entity x-anchored y angle)
+    (update! screen :ship-x x-anchored))
   entity)
 
 (defn handle-collision [ship other-entity screen entities]

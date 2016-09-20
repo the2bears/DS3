@@ -101,6 +101,7 @@
                                  :p1-lives 3
                                  :game-state :attract-mode)
                         (conj entities (ship/create-ship-entity! screen)))
+      ;default
       nil))
 
   :on-pause
@@ -121,9 +122,7 @@
       (cond (= (:key screen) (key-code :num-1))
             (on-new-game screen entities))
       ;default
-      (do
-        (prn (:key screen))
-        entities))
+      entities)
     ))
 
 (defn on-new-game [screen entities]
