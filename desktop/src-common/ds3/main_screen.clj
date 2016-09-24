@@ -33,7 +33,7 @@
                           :ticks 0
                           :p1-level-score 0
                           :high-score 0
-                          :p1-lives 3
+                          :p1-lives 0;3
                           :game-state :attract-mode
                           :formation-expand? false
                           :wave-respawning? false
@@ -42,12 +42,10 @@
                     (body-position! 0 (c/screen-to-world c/game-height) 0))
           bottom-oob (doto (create-oob-entity! screen (c/screen-to-world (+ c/game-width 20)) (c/screen-to-world 20))
                     (body-position! (c/screen-to-world (- 10)) (c/screen-to-world (- 20)) 0))
-          pixel-ship (ship/create-ship-entity! screen)
           space (sp/create-space)]
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
-       space
-       pixel-ship]))
+       space]))
 
   :on-render
   (fn [screen entities]
@@ -98,9 +96,8 @@
                     (conj entities (enemy/create-enemies screen)))
       :post-game-over (do
                         (update! screen :p1-level-score 0
-                                 :p1-lives 3
                                  :game-state :attract-mode)
-                        (conj entities (ship/create-ship-entity! screen)))
+                        entities)
       ;default
       nil))
 
@@ -126,15 +123,15 @@
     ))
 
 (defn on-new-game [screen entities]
-  (do (update! screen
-               :ticks 0
-               :p1-level-score 0
-               :p1-lives 3
-               :game-state :in-game
-               :formation-expand? false
-               :wave-respawning? false)
-    (prn :on-new-game)
-    (remove #(:enemy? %) entities)))
+  (update! screen
+           :ticks 0
+           :p1-level-score 0
+           :p1-lives 3
+           :game-state :in-game
+           :formation-expand? false
+           :wave-respawning? false)
+  (prn :on-new-game)
+  (remove #(:enemy? %) (conj entities (ship/create-ship-entity! screen))))
 
 (defn handle-all-entities [screen entities]
   (->> entities
