@@ -127,10 +127,13 @@
                           drifters (shuffle (filter #(= (:movement-state %) :drifting) enemies))
                           non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
                           entity (first drifters)
-                          attacker (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
-                                     :spline (splines/calibrate-spline (:x entity) (:y entity) (:row entity)))]
+                          attacker (cond entity
+                                         (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
+                                           :spline (splines/calibrate-spline (:x entity) (:y entity) (:row entity)))
+                                         :else nil)]
                       ;(prn :entities (count entities) :enemies (count enemies) :non-enemies (count non-enemies) :drifters (count drifters) :non-drifters (count non-drifters))
-                      (conj (conj (conj (rest drifters) attacker) non-drifters) non-enemies)))
+                      (cond (nil? attacker) entities
+                            :else (conj (conj (conj (rest drifters) attacker) non-drifters) non-enemies))))
           :else entities)))
 
 (defn update-home [entity screen]
