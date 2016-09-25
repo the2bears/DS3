@@ -29,9 +29,11 @@
 
 (def ^:const enemy-width-max 22)
 
-(def ^:const enemy-width-start enemy-width-min);
+(def ^:const enemy-width-start enemy-width-min)
 
 (def ^:const drift-ticks 240)
+
+(def ^:const between-attack-ticks 180)
 
 (def ^:const drift-x-delta (screen-to-world (/ (- enemy-width-max enemy-width-min) drift-ticks)))
 

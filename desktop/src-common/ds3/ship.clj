@@ -116,6 +116,7 @@
 (defn handle-collision [ship other-entity screen entities]
   (cond (:bomb? other-entity)
         (let [lives (- (:p1-lives screen) 1)]
+          (update! screen :can-attack? false)
           (remove #(or (= other-entity %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
         :else entities))
 
@@ -129,9 +130,11 @@
                        (< distance default-r2)))
           dead-enemies (filter #(collide? ship %) enemies)
           collided? (> (count dead-enemies) 0)]
-      (cond collided? (remove #(or (= (first dead-enemies) %) (= ship %)) (conj entities
-                                                                                (exp/create-ship-explosion (:x ship) (:y ship))
-                                                                                (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies)))))
+      (cond collided? (do
+                        (update! screen :can-attack? false)
+                        (remove #(or (= (first dead-enemies) %) (= ship %)) (conj entities
+                                                                                  (exp/create-ship-explosion (:x ship) (:y ship))
+                                                                                  (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies))))))
             :else entities))
     entities
     ))

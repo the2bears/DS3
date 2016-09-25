@@ -114,6 +114,13 @@
                 :else nil
                 ))))
 
+(defn handle-attack [{:keys [ticks game-state can-attack?] :as screen} entities]
+  (let [attack? (and can-attack?
+                     (= game-state :in-game)
+                     (= (mod ticks c/between-attack-ticks) 0))]
+    (cond attack? (prn :attack!))
+    entities))
+
 (defn update-home [entity screen]
   (let [on-left (< (:home-x entity) c/half-game-width-world)
         outward  (:formation-expand? screen)

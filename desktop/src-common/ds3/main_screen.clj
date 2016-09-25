@@ -37,6 +37,7 @@
                           :game-state :attract-mode
                           :formation-expand? false
                           :wave-respawning? false
+                          :can-attack? false
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
                     (body-position! 0 (c/screen-to-world c/game-height) 0))
@@ -52,9 +53,10 @@
     (update! screen :ticks (inc (:ticks screen)))
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
-          camera (:camera screen)]
+          camera (:camera screen)
+          ticks (:ticks screen)]
       (clear! 0.1 0.1 0.12 1)
-      (cond (= (mod (:ticks screen) c/drift-ticks) 0)
+      (cond (= (mod ticks c/drift-ticks) 0)
             (update! screen :formation-expand? (not (:formation-expand? screen))))
       (let [entities
             (->> entities
@@ -63,6 +65,7 @@
                  (handle-all-entities screen)
                  (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
                  (check-game-status screen)
+                 (enemy/handle-attack screen)
                  (sort-by :render-layer)
                  (render! screen))]
         ;(.render debug-renderer world (.combined camera))
@@ -92,7 +95,7 @@
                       entities)
       :spawn-wave (do
                     (prn :spawn-wave)
-                    (update! screen :wave-respawning? false :formation-expand? false :ticks 0)
+                    (update! screen :wave-respawning? false :formation-expand? false :ticks 0 :can-attack? true)
                     (conj entities (enemy/create-enemies screen)))
       :post-game-over (do
                         (update! screen :p1-level-score 0
@@ -129,7 +132,8 @@
            :p1-lives 3
            :game-state :in-game
            :formation-expand? false
-           :wave-respawning? false)
+           :wave-respawning? false
+           :can-attack? false)
   (prn :on-new-game)
   (remove #(:enemy? %) (conj entities (ship/create-ship-entity! screen))))
 
@@ -168,7 +172,9 @@
                                   (update! screen :game-state :game-over)
                                   (add-timer! screen :post-game-over 5)
                                   entities)
-                    :else (conj entities (ship/create-ship-entity! screen)))))
+                    :else (do
+                            (update! screen :can-attack? true)
+                            (conj entities (ship/create-ship-entity! screen))))))
           (and (empty? enemies)
                (not (:wave-respawning? screen))
                (= :in-game (:game-state screen)))
