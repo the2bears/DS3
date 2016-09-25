@@ -119,7 +119,9 @@
 (defn handle-attack [{:keys [ticks game-state can-attack?] :as screen} entities]
   (let [attack? (and can-attack?
                      (= game-state :in-game)
-                     (= (mod ticks c/between-attack-ticks) 0))]
+                     (or
+                       (= (mod ticks c/between-attack-ticks) 0)
+                       (= (mod (+ ticks 20) c/between-attack-ticks) 0)))]
     (cond attack? (do
                     ;(prn :attack!)
                     (let [enemies (filter #(:enemy? %) entities)

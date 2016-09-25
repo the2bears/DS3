@@ -9,7 +9,7 @@
 
 (def bomb-width (c/screen-to-world 3.0))
 (def bomb-height (c/screen-to-world 4.0))
-(def bomb-speed (c/screen-to-world -80.0))
+(def bomb-speed (c/screen-to-world -120.0))
 (def half-width (/ bomb-width 2))
 (def half-height (/ bomb-height 2))
 (def bomb-textures (atom []))
@@ -23,7 +23,7 @@
 (defn create-bomb-body! [screen x y]
   (let [body (add-body! screen (body-def :dynamic))
         ship-x (:ship-x screen)
-        bomb-x (* 0.3 (- ship-x x))]
+        bomb-x (* 0.5 (- ship-x x))]
     (->> (polygon-shape :set-as-box half-width half-height (vector-2 half-width (+ bomb-height half-height)) 0)
          (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
          (body! body :create-fixture ))
