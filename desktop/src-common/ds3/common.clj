@@ -33,7 +33,7 @@
 
 (def ^:const drift-ticks 240)
 
-(def ^:const between-attack-ticks 180)
+(def ^:const between-attack-ticks 120)
 
 (def ^:const drift-x-delta (screen-to-world (/ (- enemy-width-max enemy-width-min) drift-ticks)))
 

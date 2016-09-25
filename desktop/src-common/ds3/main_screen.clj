@@ -63,9 +63,9 @@
                  (step! screen)
                  (check-for-input screen)
                  (handle-all-entities screen)
-                 (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
                  (check-game-status screen)
                  (enemy/handle-attack screen)
+                 (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
                  (sort-by :render-layer)
                  (render! screen))]
         ;(.render debug-renderer world (.combined camera))

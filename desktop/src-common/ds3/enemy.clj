@@ -95,17 +95,19 @@
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
         (if-let [x (:x enemy)]
-          (cond (= :drifting (:movement-state enemy))
+          (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behavior
                 (do
-                  (let [entities (->> entities
-                                      (map (fn [entity]
-                                             (cond (= enemy entity)
-                                                   (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
-                                                     :spline (splines/calibrate-spline x (:y entity) (:row entity)))
-                                                   :else entity)))
-                                      )]
-                    (remove #(= other-entity %) entities)))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (remove #(or (= enemy %)
+                               (= other-entity %))
+                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
                 (= :attacking (:movement-state enemy))
+                (do
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (remove #(or (= enemy %)
+                               (= other-entity %))
+                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
+                (= :returning (:movement-state enemy))
                 (do
                   (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
@@ -118,8 +120,18 @@
   (let [attack? (and can-attack?
                      (= game-state :in-game)
                      (= (mod ticks c/between-attack-ticks) 0))]
-    (cond attack? (prn :attack!))
-    entities))
+    (cond attack? (do
+                    ;(prn :attack!)
+                    (let [enemies (filter #(:enemy? %) entities)
+                          non-enemies (filter #(nil? (:enemy? %)) entities)
+                          drifters (shuffle (filter #(= (:movement-state %) :drifting) enemies))
+                          non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
+                          entity (first drifters)
+                          attacker (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
+                                     :spline (splines/calibrate-spline (:x entity) (:y entity) (:row entity)))]
+                      ;(prn :entities (count entities) :enemies (count enemies) :non-enemies (count non-enemies) :drifters (count drifters) :non-drifters (count non-drifters))
+                      (conj (conj (conj (rest drifters) attacker) non-drifters) non-enemies)))
+          :else entities)))
 
 (defn update-home [entity screen]
   (let [on-left (< (:home-x entity) c/half-game-width-world)

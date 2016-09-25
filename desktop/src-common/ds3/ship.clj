@@ -15,6 +15,7 @@
 
 (defn create-ship-entity! [screen]
   (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE)]
+    (update! screen :ship-x (c/screen-to-world (/ c/game-width 2)))
     (doto (assoc pixel-ship
             :body (create-ship-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
