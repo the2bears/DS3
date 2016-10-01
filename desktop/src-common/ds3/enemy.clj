@@ -12,7 +12,7 @@
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body! update-drift update-from-spline update-home update-returning)
+(declare create-enemy-body! create-mini-body! update-drift update-from-spline update-home update-returning)
 
 (def boss
   {:name :ds3-boss
@@ -35,19 +35,35 @@
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
 (def default-ticks-next-bomb 90)
+(def large-size (c/screen-to-world 16))
+(def mini-size (c/screen-to-world 10))
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
-            :width (c/screen-to-world 16) :height (c/screen-to-world 16)
+            :width large-size :height large-size
             :id :enemy-ship :enemy? true :render-layer 70 :score 100
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
             :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0)
             :movement-state starting-state
-            :ticks-to-bomb (rand-int default-ticks-first-bomb))
+            :ticks-to-bomb (rand-int default-ticks-first-bomb)
+            :ship-texture ship-texture)
         (body! :set-linear-velocity 0 0))))
+
+(defn create-mini-entity! [screen ship-texture x y]
+  (let [mini-ship (assoc (texture ship-texture)
+            :body (create-mini-body! screen)
+            :translate-x (- (c/screen-to-world 4)) :translate-y (- (c/screen-to-world 6.6))
+            :width mini-size :height mini-size
+            :id :mini-enemy :mini? true :render-layer 70 :score 200
+            :ticks-to-bomb (rand-int default-ticks-first-bomb))]
+    (doto mini-ship
+      (body! :set-linear-velocity 0 (c/screen-to-world -20.0))
+      (body-position! x y 180.0))
+    mini-ship
+    ))
 
 (defn create-enemy-body!
   [screen]
@@ -59,6 +75,15 @@
     (.dispose enemy-shape)
     body))
 
+(defn create-mini-body!
+  [screen]
+  (let [body (add-body! screen (body-def :dynamic :bullet true))
+        enemy-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
+    (->> enemy-shape
+         (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
+         (body! body :create-fixture))
+    (.dispose enemy-shape)
+    body))
 
 (defn create-enemies [screen]
   (let [ship-textures (into [] (take c/enemy-height (repeatedly #(ship/create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))))]
@@ -70,7 +95,7 @@
              (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
              ))))
 
-(defn move [entity screen]
+(defn move [screen entity]
   (let [ms (:movement-state entity)
         entity (update-home entity screen)]
     (cond (= :drifting ms)
@@ -81,7 +106,7 @@
           (update-returning entity screen))
     ))
 
-(defn drop-bomb [entity screen]
+(defn drop-bomb [screen entity]
   (let [ms (:movement-state entity)]
     (cond (= :attacking ms)
           (let [ttb? (and (<= (:ticks-to-bomb entity) 0)
@@ -95,7 +120,7 @@
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
         (if-let [x (:x enemy)]
-          (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behavior
+          (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behaviorx
                 (do
                   (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
@@ -109,10 +134,12 @@
                           (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
                 (= :returning (:movement-state enemy))
                 (do
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy))
+                           :to-do {:f create-mini-entity! :args [screen (:ship-texture enemy) (:x enemy) (:y enemy)]})
                   (remove #(or (= enemy %)
                                (= other-entity %))
-                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
+                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))
+                          ))
                 :else nil
                 ))))
 

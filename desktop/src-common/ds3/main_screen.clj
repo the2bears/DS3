@@ -54,7 +54,8 @@
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
           camera (:camera screen)
-          ticks (:ticks screen)]
+          ticks (:ticks screen)
+          to-do (:to-do screen)]
       (clear! 0.1 0.1 0.12 1)
       (cond (= (mod ticks c/drift-ticks) 0)
             (update! screen :formation-expand? (not (:formation-expand? screen))))
@@ -69,9 +70,15 @@
                  (sort-by :render-layer)
                  (render! screen))]
         ;(.render debug-renderer world (.combined camera))
-        entities)))
+        (cond (nil? to-do)
+              entities
+              :else
+              (let [mini-enemy (apply (:f to-do) (:args to-do))]
+                (update! screen :to-do nil)
+                (conj entities mini-enemy))
+              ))))
 
-  :on-begin-contact
+  :on-end-contact
   (fn [screen entities]
     (let [entity (first-entity screen entities)
           entity2 (second-entity screen entities)]
@@ -141,12 +148,13 @@
   (->> entities
        (map (fn [entity]
               (cond (:ship? entity) (ship/move-player-tick screen entity)
-                    (:enemy? entity) (-> entity
+                    (:enemy? entity) (->> entity
                                          (enemy/move screen)
                                          (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:bomb? entity) (bomb/animate-bomb screen entity)
                     (:star? entity) (sp/move-star screen entity)
+                    ;(:mini? entity) (do (prn :found-mini) entity)
                     :else entity)))
        (ship/collide-with-enemy? screen)
        ))
@@ -230,3 +238,5 @@ body))
 (-> main-screen :entities deref)
 
 ;(do (use 'ds3.core.desktop-launcher)(-main))
+
+
