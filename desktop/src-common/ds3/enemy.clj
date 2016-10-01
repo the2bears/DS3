@@ -54,11 +54,12 @@
 
 (defn create-mini-entity! [screen ship-texture x y]
   (let [mini-ship (assoc (texture ship-texture)
-            :body (create-mini-body! screen)
-            :translate-x (- (c/screen-to-world 4)) :translate-y (- (c/screen-to-world 6.6))
-            :width mini-size :height mini-size
-            :id :mini-enemy :mini? true :render-layer 70 :score 200
-            :ticks-to-bomb (rand-int default-ticks-first-bomb))]
+                    :body (create-mini-body! screen)
+                    :x x :y y
+                    :translate-x (- (c/screen-to-world 4)) :translate-y (- (c/screen-to-world 6.6))
+                    :width mini-size :height mini-size
+                    :id :mini-enemy :mini? true :render-layer 70 :score 200
+                    :ticks-to-bomb (rand-int default-ticks-first-bomb))]
     (doto mini-ship
       (body! :set-linear-velocity 0 (c/screen-to-world -20.0))
       (body-position! x y 180.0))
