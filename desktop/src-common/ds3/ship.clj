@@ -121,7 +121,7 @@
           (remove #(or (= other-entity %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
         (:mini? other-entity)
         (let [lives (- (:p1-lives screen) 1)]
-          (update! screen :can-attack? false)
+          (update! screen :can-attack? false :rank c/starting-rank)
           (remove #(or (= other-entity %) (= ship %)) (conj entities
                                                             (exp/create-ship-explosion (:x ship) (:y ship))
                                                             (exp/create-explosion (:x other-entity) (:y other-entity)))))
@@ -138,7 +138,7 @@
           dead-enemies (filter #(collide? ship %) enemies)
           collided? (> (count dead-enemies) 0)]
       (cond collided? (do
-                        (update! screen :can-attack? false)
+                        (update! screen :can-attack? false :rank c/starting-rank)
                         (remove #(or (= (first dead-enemies) %) (= ship %)) (conj entities
                                                                                   (exp/create-ship-explosion (:x ship) (:y ship))
                                                                                   (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies))))))

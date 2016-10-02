@@ -9,6 +9,8 @@
 
 (def ^:const game-height 288.0)
 
+(def ^:const starting-rank 0)
+
 (def ^:const game-width-adj (screen-to-world 224.0))
 
 (def ^:const game-height-adj (screen-to-world 288.0))
@@ -34,6 +36,10 @@
 (def ^:const drift-ticks 240)
 
 (def ^:const between-attack-ticks 120)
+
+(def ^:const between-attack-delta 5)
+
+(def ^:const between-attack-max-delta 50)
 
 (def ^:const drift-x-delta (screen-to-world (/ (- enemy-width-max enemy-width-min) drift-ticks)))
 

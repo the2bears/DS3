@@ -34,6 +34,7 @@
                           :p1-level-score 0
                           :high-score 0
                           :p1-lives 0;3
+                          :p1-rank c/starting-rank
                           :game-state :attract-mode
                           :formation-expand? false
                           :wave-respawning? false
@@ -135,6 +136,7 @@
            :ticks 0
            :p1-level-score 0
            :p1-lives 3
+           :p1-rank c/starting-rank
            :game-state :in-game
            :formation-expand? false
            :wave-respawning? false
@@ -236,5 +238,3 @@ body))
 (-> main-screen :entities deref)
 
 ;(do (use 'ds3.core.desktop-launcher)(-main))
-
-

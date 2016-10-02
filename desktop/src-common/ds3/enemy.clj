@@ -35,6 +35,8 @@
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
 (def default-ticks-next-bomb 90)
+(def ticks-next-bomb-rank-delta 5)
+(def ticks-next-bomb-max-delta 60)
 (def large-size (c/screen-to-world 16))
 (def mini-size (c/screen-to-world 10))
 
@@ -116,12 +118,14 @@
     ))
 
 (defn drop-bomb [screen entity]
-  (let [ms (:movement-state entity)]
+  (let [ms (:movement-state entity)
+        rank (:p1-rank screen)]
     (cond (= :attacking ms)
           (let [ttb? (and (<= (:ticks-to-bomb entity) 0)
                           (> (:y entity) bomb-y-min))]
             (if ttb?
-              (list (assoc entity :ticks-to-bomb default-ticks-next-bomb) (bomb/create-bomb screen (:x entity) (- (:y entity) (c/screen-to-world 6))))
+              (list (assoc entity :ticks-to-bomb (- default-ticks-next-bomb (min ticks-next-bomb-max-delta (* rank ticks-next-bomb-rank-delta))))
+                    (bomb/create-bomb screen (:x entity) (- (:y entity) (c/screen-to-world 6))))
               (assoc entity :ticks-to-bomb (- (:ticks-to-bomb entity) 1))))
           :else entity
         )))
@@ -168,11 +172,18 @@
         ))
 
 (defn handle-attack [{:keys [ticks game-state can-attack?] :as screen} entities]
-  (let [attack? (and can-attack?
+  (let [rank (:p1-rank screen)
+        b-a-t (- c/between-attack-ticks (min c/between-attack-max-delta (* rank c/between-attack-delta)))
+        attack? (and can-attack?
                      (= game-state :in-game)
                      (or
-                       (= (mod ticks c/between-attack-ticks) 0)
-                       (= (mod (+ ticks 20) c/between-attack-ticks) 0)))]
+                       (= (mod ticks b-a-t) 0)
+                       (and
+                         (> rank 1)
+                         (= (mod (+ ticks 15) b-a-t) 0))
+                       (and
+                         (> rank 5)
+                         (= (mod (+ ticks 30) b-a-t) 0))))]
     (cond attack? (do
                     ;(prn :attack!)
                     (let [enemies (filter #(:enemy? %) entities)
