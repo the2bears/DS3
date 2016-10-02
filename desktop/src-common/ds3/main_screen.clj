@@ -81,12 +81,12 @@
         (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
         (:ship? entity) (ship/handle-collision entity entity2 screen entities)
         (:ship? entity2) (ship/handle-collision entity2 entity screen entities)
+        (:mini? entity) (enemy/handle-mini-collision entity entity2 screen entities)
+        (:mini? entity2) (enemy/handle-mini-collision entity2 entity screen entities)
         (:bullet? entity) (bullet/handle-collision entity entity2 screen entities)
         (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)
         (:bomb? entity) (bomb/handle-collision entity entity2 screen entities)
         (:bomb? entity2) (bomb/handle-collision entity2 entity screen entities)
-        (:mini? entity) (enemy/handle-mini-collision entity entity2 screen entities)
-        (:mini? entity2) (enemy/handle-mini-collision entity2 entity screen entities)
         )))
 
   :on-timer
