@@ -54,8 +54,7 @@
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
           camera (:camera screen)
-          ticks (:ticks screen)
-          to-do (:to-do screen)]
+          ticks (:ticks screen)]
       (clear! 0.1 0.1 0.12 1)
       (cond (= (mod ticks c/drift-ticks) 0)
             (update! screen :formation-expand? (not (:formation-expand? screen))))
@@ -69,14 +68,7 @@
                  (check-game-status screen)
                  (sort-by :render-layer)
                  (render! screen))]
-        ;(.render debug-renderer world (.combined camera))
-        (cond (nil? to-do)
-              entities
-              :else
-              (let [mini-enemy (apply (:f to-do) (:args to-do))]
-                (update! screen :to-do nil)
-                (conj entities mini-enemy))
-              ))))
+        entities)))
 
   :on-end-contact
   (fn [screen entities]
@@ -86,13 +78,15 @@
       (cond
         (:enemy? entity) (enemy/handle-collision entity entity2 screen entities)
         (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
+        (:mini? entity) (enemy/handle-mini-collision entity entity2 screen entities)
+        (:mini? entity2) (enemy/handle-mini-collision entity2 entity screen entities)
         (:ship? entity) (ship/handle-collision entity entity2 screen entities)
         (:ship? entity2) (ship/handle-collision entity2 entity screen entities)
         (:bullet? entity) (bullet/handle-collision entity entity2 screen entities)
         (:bullet? entity2) (bullet/handle-collision entity2 entity screen entities)
         (:bomb? entity) (bomb/handle-collision entity entity2 screen entities)
         (:bomb? entity2) (bomb/handle-collision entity2 entity screen entities)
-      )))
+        )))
 
   :on-timer
   (fn [screen entities]
@@ -108,8 +102,11 @@
                         (update! screen :p1-level-score 0
                                  :game-state :attract-mode)
                         entities)
-      ;default
-      nil))
+      ;default pulls a function/args map and executes it - see mini enemies
+      (let [to-do ((:id screen) screen)
+                    new-entity (apply (:f to-do) (:args to-do))]
+                (update! screen (:id screen) nil)
+                (conj entities new-entity))))
 
   :on-pause
   (fn [screen entities]

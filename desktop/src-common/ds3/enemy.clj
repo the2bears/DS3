@@ -6,13 +6,13 @@
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
             [ds3.splines :as splines]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
+            [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body! create-mini-body! update-drift update-from-spline update-home update-returning)
+(declare create-enemy-body! create-mini-body! create-minis rand-keyword update-drift update-from-spline update-home update-returning)
 
 (def boss
   {:name :ds3-boss
@@ -59,9 +59,10 @@
                     :translate-x (- (c/screen-to-world 4)) :translate-y (- (c/screen-to-world 6.6))
                     :width mini-size :height mini-size
                     :id :mini-enemy :mini? true :render-layer 70 :score 200
+                    :movement-state :falling
                     :ticks-to-bomb (rand-int default-ticks-first-bomb))]
     (doto mini-ship
-      (body! :set-linear-velocity 0 (c/screen-to-world -20.0))
+      (body! :set-linear-velocity 0 (c/screen-to-world -50.0))
       (body-position! x y 180.0))
     mini-ship
     ))
@@ -96,6 +97,13 @@
              (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
              ))))
 
+(defn create-minis [screen ship-texture x y]
+  (doseq [xx (range 4)]
+    (let [next-keyword (rand-keyword)]
+      (update! screen next-keyword {:f create-mini-entity! :args [screen ship-texture x y]})
+      (add-timer! screen next-keyword (* 0.17 xx))))
+  )
+
 (defn move [screen entity]
   (let [ms (:movement-state entity)
         entity (update-home entity screen)]
@@ -118,6 +126,8 @@
           :else entity
         )))
 
+(defn rand-keyword [] (keyword (str (java.util.UUID/randomUUID))))
+
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
         (if-let [x (:x enemy)]
@@ -126,23 +136,37 @@
                   (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
                                (= other-entity %))
-                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
+                          (conj entities (exp/create-explosion x (:y enemy)))))
                 (= :attacking (:movement-state enemy))
                 (do
                   (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
                                (= other-entity %))
-                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))
+                          (conj entities (exp/create-explosion x (:y enemy)))))
                 (= :returning (:movement-state enemy))
                 (do
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy))
-                           :to-do {:f create-mini-entity! :args [screen (:ship-texture enemy) (:x enemy) (:y enemy)]})
+                  (create-minis screen (:ship-texture enemy) x (:y enemy))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
                                (= other-entity %))
-                          (conj entities (exp/create-explosion (:x enemy) (:y enemy)))
+                          (conj entities (exp/create-explosion x (:y enemy)))
                           ))
                 :else nil
                 ))))
+
+(defn handle-mini-collision [mini other-entity screen entities]
+  (cond (:bullet? other-entity)
+        (if-let [x (:x mini)]
+          (do
+            (update! screen :p1-level-score (+ (:p1-level-score screen) (:score mini)))
+            (remove #(or (= mini %)
+                         (= other-entity %))
+                    (conj entities (exp/create-explosion x (:y mini))))))
+        (:oob? other-entity)
+        (do
+          (prn :handle-mini-collision)
+          (remove #(= mini %) entities))
+        ))
 
 (defn handle-attack [{:keys [ticks game-state can-attack?] :as screen} entities]
   (let [attack? (and can-attack?
