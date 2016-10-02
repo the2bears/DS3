@@ -133,6 +133,7 @@
         (if-let [x (:x enemy)]
           (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behaviorx
                 (do
+                  ;(create-minis screen (:ship-texture enemy) x (:y enemy)) ;handy for testing!
                   (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
                   (remove #(or (= enemy %)
                                (= other-entity %))
@@ -163,9 +164,7 @@
                          (= other-entity %))
                     (conj entities (exp/create-explosion x (:y mini))))))
         (:oob? other-entity)
-        (do
-          (prn :handle-mini-collision)
-          (remove #(= mini %) entities))
+        (remove #(= mini %) entities)
         ))
 
 (defn handle-attack [{:keys [ticks game-state can-attack?] :as screen} entities]
