@@ -103,8 +103,7 @@
                     (update! screen :wave-respawning? false :formation-expand? false :ticks 0 :can-attack? true :p1-rank rank :wave (+ wave 1))
                     (conj entities (enemy/create-enemies screen)))
       :post-game-over (do
-                        (update! screen :p1-level-score 0
-                                 :game-state :attract-mode)
+                        (update! screen :game-state :attract-mode)
                         entities)
       ;default pulls a function/args map and executes it - see mini enemies
       (let [to-do ((:id screen) screen)
