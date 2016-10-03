@@ -37,6 +37,7 @@
                           :p1-rank c/starting-rank
                           :game-state :attract-mode
                           :formation-expand? false
+                          :wave 0
                           :wave-respawning? false
                           :can-attack? false
                           :debug-renderer (Box2DDebugRenderer.))
@@ -96,9 +97,10 @@
       :refresh-shot (do
                       (update! screen :fire-when-ready true)
                       entities)
-      :spawn-wave (do
-                    (prn :spawn-wave)
-                    (update! screen :wave-respawning? false :formation-expand? false :ticks 0 :can-attack? true)
+      :spawn-wave (let [wave (:wave screen)
+                        rank (if (> wave 0) (+ (:p1-rank screen) 1) (:p1-rank screen))]
+                    (prn :spawn-wave :p1-rank rank)
+                    (update! screen :wave-respawning? false :formation-expand? false :ticks 0 :can-attack? true :p1-rank rank :wave (+ wave 1))
                     (conj entities (enemy/create-enemies screen)))
       :post-game-over (do
                         (update! screen :p1-level-score 0
@@ -139,6 +141,7 @@
            :p1-rank c/starting-rank
            :game-state :in-game
            :formation-expand? false
+           :wave 0
            :wave-respawning? false
            :can-attack? false)
   (prn :on-new-game)
