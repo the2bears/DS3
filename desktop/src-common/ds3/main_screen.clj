@@ -56,22 +56,28 @@
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
           camera (:camera screen)
-          ticks (:ticks screen)]
+          ticks (:ticks screen)
+          game-state (:game-state screen)]
       (clear! 0.1 0.1 0.12 1)
       (cond (= (mod ticks c/drift-ticks) 0)
             (update! screen :formation-expand? (not (:formation-expand? screen))))
-      (let [entities
-            (->> entities
-                 (step! screen)
-                 (check-for-input screen)
-                 (handle-all-entities screen)
-                 (enemy/handle-attack screen)
-                 (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
-                 (check-game-status screen)
-                 (sort-by :render-layer)
-                 (render! screen))]
-        ;(.render debug-renderer world (.combined camera))
-        entities)))
+      (cond (not= :paused game-state)
+            (let [entities
+                  (->> entities
+                       (step! screen)
+                       (check-for-input screen)
+                       (handle-all-entities screen)
+                       (enemy/handle-attack screen)
+                       (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
+                       (check-game-status screen)
+                       (sort-by :render-layer)
+                       (render! screen))]
+              ;(.render debug-renderer world (.combined camera))
+              entities)
+            :else (->> entities
+                       (check-game-status screen)
+                       (render! screen)
+                       ))))
 
   :on-begin-contact
   (fn [screen entities]
@@ -112,9 +118,9 @@
                 (conj entities new-entity))))
 
   :on-pause
-  (fn [screen entities]
+  (fn [{:keys [game-state] :as screen} entities]
     (do
-      (prn :on-pause)
+      (if (= game-state :in-game) (update! screen :game-state :paused))
       entities))
 
   :on-key-up
@@ -124,10 +130,19 @@
       (cond (= (:key screen) (key-code :x))
             (do
               (update! screen :fire-when-ready true)
+              entities)
+            (= (:key screen) (key-code :p))
+            (do
+              (update! screen :game-state :paused)
               entities))
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
             (on-new-game screen entities))
+      :paused
+      (cond (= (:key screen) (key-code :p))
+            (do
+              (update! screen :game-state :in-game)
+              entities))
       ;default
       entities)
     ))

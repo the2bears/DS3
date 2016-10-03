@@ -14,6 +14,8 @@
 (def ^:const p1-score-y 28.0)
 (def ^:const game-over-x 246.0)
 (def ^:const game-over-y 420.0)
+(def ^:const game-paused-x 276.0)
+(def ^:const game-paused-y 420.0)
 (def ^:const high-score-label-x (/ 472.0 2.0)) ;(* 3 224)
 (def ^:const high-score-x (/ 472.0 2.0))
 
@@ -31,7 +33,8 @@
                :font (bitmap-font "arcade20.fnt"))
     entities)
 
-  :on-render  (fn [screen entities]
+  :on-render
+  (fn [screen entities]
     (let [renderer (:renderer screen)
           ^Batch batch (.getBatch renderer)
           arcade-fnt (:font screen)]
@@ -51,7 +54,11 @@
             (= :attract-mode (:game-state screen))
             (do
               (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
-              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "CHOOSE 1 OR 2 PLAYERS" 126.0 game-over-y)))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "CHOOSE 1 OR 2 PLAYERS" 126.0 game-over-y))
+            (= :paused (:game-state screen))
+            (do
+              (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "PAUSED" game-paused-x game-paused-y)))
       (.end batch))
     (->> entities
          (count-mini-ships screen)
