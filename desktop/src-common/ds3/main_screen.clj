@@ -35,6 +35,7 @@
                           :high-score 0
                           :p1-lives 0;3
                           :p1-rank c/starting-rank
+                          :p1-bonus 1
                           :game-state :attract-mode
                           :formation-expand? false
                           :wave 0
@@ -153,6 +154,7 @@
            :p1-level-score 0
            :p1-lives 3
            :p1-rank c/starting-rank
+           :p1-bonus 1
            :game-state :in-game
            :formation-expand? false
            :wave 0
@@ -186,6 +188,7 @@
     (screen! hud/hud-screen :on-update-lives :p1-lives lives)
     (screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen) :high-score high-score)
     (screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
+    (screen! hud/hud-screen :on-update-bonus :p1-bonus (:p1-bonus screen))
     (cond (and (nil? ship)
                (= :in-game (:game-state screen))
                (every? #(= (:movement-state %) :drifting) enemies)

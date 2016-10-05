@@ -26,9 +26,9 @@
                :renderer (stage)
                :camera (orthographic :set-to-ortho false)
                :p1-score 0
+               :p1-bonus 1
                :high-score 0
                :render? false
-               :render-delay 5
                :game-state :attract-mode
                :font (bitmap-font "arcade20.fnt"))
     entities)
@@ -37,7 +37,8 @@
   (fn [screen entities]
     (let [renderer (:renderer screen)
           ^Batch batch (.getBatch renderer)
-          arcade-fnt (:font screen)]
+          arcade-fnt (:font screen)
+          bonus (:p1-bonus screen)]
       (.begin batch)
       (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch "1UP" p1-1up-x (- (game :height) y-padding))
@@ -58,7 +59,11 @@
             (= :paused (:game-state screen))
             (do
               (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
-              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "PAUSED" game-paused-x game-paused-y)))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "PAUSED" game-paused-x game-paused-y))
+            (> bonus 0)
+            (do
+              (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str "x" bonus) 188.0 (- (game :height) p1-score-y))))
       (.end batch))
     (->> entities
          (count-mini-ships screen)
@@ -88,7 +93,12 @@
   :on-update-game-state
   (fn [screen entities]
     (let [state (:game-state screen)]
-      (update! screen :game-state state))))
+      (update! screen :game-state state)))
+
+  :on-update-bonus
+  (fn [screen entities]
+    (let [value (:p1-bonus screen)]
+      (update! screen :p1-bonus value))))
 
 (defn count-mini-ships [screen entities]
   (let [actual-count (count (filter #(:mini-ship? %) entities))

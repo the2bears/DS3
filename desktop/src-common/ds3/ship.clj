@@ -117,11 +117,11 @@
 (defn handle-collision [ship other-entity screen entities]
   (cond (:bomb? other-entity)
         (let [lives (- (:p1-lives screen) 1)]
-          (update! screen :can-attack? false :p1-rank c/starting-rank)
+          (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
           (remove #(or (= other-entity %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
         (:mini? other-entity)
         (let [lives (- (:p1-lives screen) 1)]
-          (update! screen :can-attack? false :p1-rank c/starting-rank)
+          (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
           (remove #(or (= other-entity %) (= ship %)) (conj entities
                                                             (exp/create-ship-explosion (:x ship) (:y ship))
                                                             (exp/create-explosion (:x other-entity) (:y other-entity)))))
