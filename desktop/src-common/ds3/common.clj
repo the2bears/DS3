@@ -37,7 +37,7 @@
 
 (def ^:const between-attack-ticks 120)
 
-(def ^:const between-attack-delta 5)
+(def ^:const between-attack-delta 4)
 
 (def ^:const between-attack-max-delta 50)
 

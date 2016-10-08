@@ -35,7 +35,7 @@
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
 (def default-ticks-next-bomb 90)
-(def ticks-next-bomb-rank-delta 5)
+(def ticks-next-bomb-rank-delta 4)
 (def ticks-next-bomb-max-delta 60)
 (def large-size (c/screen-to-world 16))
 (def mini-size (c/screen-to-world 10))
@@ -65,7 +65,7 @@
                     :bonus-group bonus-group
                     :ticks-to-bomb (rand-int default-ticks-first-bomb))]
     (doto mini-ship
-      (body! :set-linear-velocity 0 (c/screen-to-world -50.0))
+      (body! :set-linear-velocity 0 (c/screen-to-world -65.0))
       (body-position! x y 180.0))
     mini-ship
     ))
@@ -106,7 +106,7 @@
     (doseq [xx (range 4)]
       (let [next-keyword (rand-keyword)]
         (update! screen next-keyword {:f create-mini-entity! :args [screen ship-texture x y bonus-group]})
-        (add-timer! screen next-keyword (* 0.17 xx)))))
+        (add-timer! screen next-keyword (* 0.15 xx)))))
   )
 
 (defn move [screen entity]
@@ -187,10 +187,10 @@
                      (or
                        (= (mod ticks b-a-t) 0)
                        (and
-                         (> rank 1)
+                         (> rank 2)
                          (= (mod (+ ticks 15) b-a-t) 0))
                        (and
-                         (> rank 5)
+                         (> rank 7)
                          (= (mod (+ ticks 30) b-a-t) 0))))]
     (cond attack? (do
                     ;(prn :attack!)
