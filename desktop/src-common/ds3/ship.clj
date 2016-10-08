@@ -138,7 +138,7 @@
           dead-enemies (filter #(collide? ship %) enemies)
           collided? (> (count dead-enemies) 0)]
       (cond collided? (do
-                        (update! screen :can-attack? false :p1-rank c/starting-rank)
+                        (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
                         (remove #(or (= (first dead-enemies) %) (= ship %)) (conj entities
                                                                                   (exp/create-ship-explosion (:x ship) (:y ship))
                                                                                   (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies))))))

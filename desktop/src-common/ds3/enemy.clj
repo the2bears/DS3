@@ -54,7 +54,7 @@
             :ship-texture ship-texture)
         (body! :set-linear-velocity 0 0))))
 
-(defn create-mini-entity! [screen ship-texture x y]
+(defn create-mini-entity! [screen ship-texture x y bonus-group]
   (let [mini-ship (assoc (texture ship-texture)
                     :body (create-mini-body! screen)
                     :x x :y y
@@ -62,6 +62,7 @@
                     :width mini-size :height mini-size
                     :id :mini-enemy :mini? true :render-layer 70 :score 200
                     :movement-state :falling
+                    :bonus-group bonus-group
                     :ticks-to-bomb (rand-int default-ticks-first-bomb))]
     (doto mini-ship
       (body! :set-linear-velocity 0 (c/screen-to-world -50.0))
@@ -100,10 +101,12 @@
              ))))
 
 (defn create-minis [screen ship-texture x y]
-  (doseq [xx (range 4)]
-    (let [next-keyword (rand-keyword)]
-      (update! screen next-keyword {:f create-mini-entity! :args [screen ship-texture x y]})
-      (add-timer! screen next-keyword (* 0.17 xx))))
+  (let [bonus-group (rand-keyword)]
+    (update! screen bonus-group 4)
+    (doseq [xx (range 4)]
+      (let [next-keyword (rand-keyword)]
+        (update! screen next-keyword {:f create-mini-entity! :args [screen ship-texture x y bonus-group]})
+        (add-timer! screen next-keyword (* 0.17 xx)))))
   )
 
 (defn move [screen entity]
@@ -138,20 +141,20 @@
           (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behaviorx
                 (do
                   ;(create-minis screen (:ship-texture enemy) x (:y enemy)) ;handy for testing!
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
                   (remove #(or (= enemy %)
                                (= other-entity %))
                           (conj entities (exp/create-explosion x (:y enemy)))))
                 (= :attacking (:movement-state enemy))
                 (do
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
                   (remove #(or (= enemy %)
                                (= other-entity %))
                           (conj entities (exp/create-explosion x (:y enemy)))))
                 (= :returning (:movement-state enemy))
                 (do
                   (create-minis screen (:ship-texture enemy) x (:y enemy))
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (:score enemy)))
+                  (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
                   (remove #(or (= enemy %)
                                (= other-entity %))
                           (conj entities (exp/create-explosion x (:y enemy)))
@@ -163,10 +166,15 @@
   (cond (:bullet? other-entity)
         (if-let [x (:x mini)]
           (do
-            (update! screen :p1-level-score (+ (:p1-level-score screen) (:score mini)))
-            (remove #(or (= mini %)
-                         (= other-entity %))
-                    (conj entities (exp/create-explosion x (:y mini))))))
+            (let [bonus-group (:bonus-group mini)
+                  bonus-count (- (bonus-group screen) 1)]
+              (if (= 0 bonus-count) (update! screen
+                                             :p1-bonus (+ 1 (:p1-bonus screen))
+                                             :p1-rank (+ 1 (:p1-rank screen))))
+              (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score mini) (:p1-bonus screen))) bonus-group bonus-count)
+              (remove #(or (= mini %)
+                           (= other-entity %))
+                      (conj entities (exp/create-explosion x (:y mini)))))))
         (:oob? other-entity)
         (remove #(= mini %) entities)
         ))
