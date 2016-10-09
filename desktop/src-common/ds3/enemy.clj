@@ -1,7 +1,5 @@
 (ns ds3.enemy
-  (:require [pixel-ships.core :as psc :refer :all]
-            [pixel-ships.bollinger :as bollinger :refer :all]
-            [ds3.bomb :as bomb]
+  (:require [ds3.bomb :as bomb]
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.ship :as ship]

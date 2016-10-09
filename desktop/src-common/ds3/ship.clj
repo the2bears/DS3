@@ -34,11 +34,9 @@
     (.dispose ship-shape)
     body))
 
-(defn create-pixel-map-list
-  ([]
-   (create-pixel-map-list (rand-int Integer/MAX_VALUE)))
-  ([seed]
-   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc bollinger/model :seed seed)))
+(defn- create-pixel-map-list
+  ([seed c-model]
+   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc bollinger/model :seed seed)) c-model); (assoc bollinger/color-scheme :solid-color {:h 0.0 :s 1.0 :v 0.25}))
          tags (keys (:pixels ship-map))
          pixels (:pixels ship-map)
          shape-builder (fn[s] (reduce (fn[acc n] (conj acc n)) [] s))]
@@ -48,7 +46,9 @@
   ([]
    (create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))
   ([seed]
-   (let [pixel-map-list (create-pixel-map-list seed)
+   (create-pixel-ship-texture seed bollinger/color-scheme))
+  ([seed c-scheme]
+   (let [pixel-map-list (create-pixel-map-list seed c-scheme)
          pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
      (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
      (texture pix-map))))
