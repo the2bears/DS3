@@ -51,7 +51,7 @@
    (let [pixel-map-list (create-pixel-map-list seed c-scheme)
          pix-map (pixmap* 16 16 (pixmap-format :r-g-b-a8888))]
      (doseq [pixel pixel-map-list] (draw-rect-pixelmap pix-map pixel))
-     (texture pix-map))))
+     (assoc (texture pix-map) :seed seed))))
 
 (def p-per-r 1)
 

@@ -4,6 +4,7 @@
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
             [ds3.splines :as splines]
+            [pixel-ships.bollinger :as bollinger :refer :all]
             [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
@@ -89,12 +90,17 @@
     body))
 
 (defn create-enemies [screen]
-  (let [ship-textures (into [] (take c/enemy-height (repeatedly #(ship/create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))))]
+  (let [ship-textures (into [] (take c/enemy-height (repeatedly #(ship/create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))))
+        boss-texture (ship/create-pixel-ship-texture (:seed (nth ship-textures (- c/enemy-rows 1)))
+                                                     (assoc bollinger/color-scheme :solid-color {:h 0.0 :s 0.0 :v 0.25}))]
          (for [row (range c/enemy-rows)
                col (range c/enemy-columns)
                :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
                      y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (assoc (create-enemy-entity! screen (nth ship-textures row) col) :row row :col col :home-x (c/screen-to-world x) :home-y (c/screen-to-world y))
+           (doto (assoc (create-enemy-entity! screen (if (= row (- c/enemy-rows 1))
+                                                       boss-texture
+                                                       (nth ship-textures row)) col)
+                   :row row :col col :home-x (c/screen-to-world x) :home-y (c/screen-to-world y))
              (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
              ))))
 
