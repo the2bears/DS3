@@ -61,7 +61,7 @@
                     :x x :y y
                     :translate-x (- (c/screen-to-world 4)) :translate-y (- (c/screen-to-world 6.6))
                     :width mini-size :height mini-size
-                    :id :mini-enemy :mini? true :render-layer 70
+                    :id :mini-enemy :mini? true :render-layer 70 :score 200
                     :movement-state :falling
                     :bonus-group bonus-group
                     :ticks-to-bomb (rand-int default-ticks-first-bomb))]
