@@ -3,6 +3,7 @@
             [pixel-ships.bollinger :as bollinger :refer :all]
             [ds3.common :as c]
             [ds3.explosion :as exp]
+            [ds3.spark :as spark]
             [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update!]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
@@ -72,33 +73,33 @@
   ;Convert hsv to rgb
   ;Inputs are floats 0<i<1
   ([[hue saturation value alpha]]
-  (if (= saturation 0)
-    [value value value alpha]
-    (let [hue2 (cond (= 1.0 hue) 0.0
-                     :else hue)
-          h (int (* hue2 6.0))
-          f (- (* hue2 6.0) h)
-          p (* value (- 1 saturation))
-          q (* value (- 1 (* f saturation)))
-          t (* value (- 1 (* (- 1 f) saturation)))]
-          (case h
-            0 [value t p alpha]
-            1 [q value p alpha]
-            2 [p value t alpha]
-            3 [p q value alpha]
-            4 [t p value alpha]
-            [value p q alpha])
+   (if (= saturation 0)
+     [value value value alpha]
+     (let [hue2 (cond (= 1.0 hue) 0.0
+                      :else hue)
+           h (int (* hue2 6.0))
+           f (- (* hue2 6.0) h)
+           p (* value (- 1 saturation))
+           q (* value (- 1 (* f saturation)))
+           t (* value (- 1 (* (- 1 f) saturation)))]
+       (case h
+         0 [value t p alpha]
+         1 [q value p alpha]
+         2 [p value t alpha]
+         3 [p q value alpha]
+         4 [t p value alpha]
+         [value p q alpha])
 
-    ))))
+       ))))
 
 (defn move-player-tick [screen entity]
   (if (:ship? entity)
     (cond
       (key-pressed? :dpad-right)
-        (move screen entity :right)
+      (move screen entity :right)
       (key-pressed? :dpad-left)
-        (move screen entity :left)
-     :else entity)
+      (move screen entity :left)
+      :else entity)
     entity)
   )
 
@@ -137,11 +138,13 @@
                        (< distance default-r2)))
           dead-enemies (filter #(collide? ship %) enemies)
           collided? (> (count dead-enemies) 0)]
-      (cond collided? (do
+      (cond collided? (let [enemy (first dead-enemies)]
+                        (if (some? (:spark-emitter enemy))
+                          (spark/remove-spark-emitter (:spark-emitter enemy)))
                         (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
-                        (remove #(or (= (first dead-enemies) %) (= ship %)) (conj entities
-                                                                                  (exp/create-ship-explosion (:x ship) (:y ship))
-                                                                                  (exp/create-explosion (:x (first dead-enemies)) (:y (first dead-enemies))))))
+                        (remove #(or (= enemy %) (= ship %)) (conj entities
+                                                                   (exp/create-ship-explosion (:x ship) (:y ship))
+                                                                   (exp/create-explosion (:x enemy) (:y enemy)))))
             :else entities))
     entities
     ))

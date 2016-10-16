@@ -3,15 +3,17 @@
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
+            [ds3.spark :as spark]
             [ds3.splines :as splines]
             [pixel-ships.bollinger :as bollinger :refer :all]
-            [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
+            [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* screen! sound update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body! create-mini-body! create-minis rand-keyword update-drift update-from-spline update-home update-returning)
+(declare create-enemy-body! create-mini-body! create-minis explode-enemy rand-keyword
+         spark-enemy update-drift update-from-spline update-emitter update-home update-returning)
 
 (def boss
   {:name :ds3-boss
@@ -44,14 +46,14 @@
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
             :width large-size :height large-size
-            :id :enemy-ship :enemy? true :render-layer 70 :score 100
+            :id (c/rand-keyword) :enemy? true :render-layer 70 :score 100
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
             :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0)
             :movement-state starting-state
             :ticks-to-bomb (rand-int default-ticks-first-bomb)
             :ship-texture ship-texture)
-        (body! :set-linear-velocity 0 0))))
+      (body! :set-linear-velocity 0 0))))
 
 (defn create-mini-entity! [screen ship-texture x y bonus-group]
   (let [mini-ship (assoc (texture ship-texture)
@@ -59,7 +61,7 @@
                     :x x :y y
                     :translate-x (- (c/screen-to-world 4)) :translate-y (- (c/screen-to-world 6.6))
                     :width mini-size :height mini-size
-                    :id :mini-enemy :mini? true :render-layer 70 :score 200
+                    :id :mini-enemy :mini? true :render-layer 70
                     :movement-state :falling
                     :bonus-group bonus-group
                     :ticks-to-bomb (rand-int default-ticks-first-bomb))]
@@ -90,39 +92,43 @@
     body))
 
 (defn create-enemies [screen]
-  (let [ship-textures (into [] (take c/enemy-height (repeatedly #(ship/create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))))
-        boss-texture (ship/create-pixel-ship-texture (:seed (nth ship-textures (- c/enemy-rows 1)))
-                                                     (assoc bollinger/color-scheme :solid-color {:h 0.0 :s 0.0 :v 0.25}))]
-         (for [row (range c/enemy-rows)
-               col (range c/enemy-columns)
-               :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
-                     y (+ c/enemy-start-y (* row c/enemy-height))]]
-           (doto (assoc (create-enemy-entity! screen (if (= row (- c/enemy-rows 1))
-                                                       boss-texture
-                                                       (nth ship-textures row)) col)
-                   :row row :col col :home-x (c/screen-to-world x) :home-y (c/screen-to-world y))
-             (body-position! (c/screen-to-world x) (c/screen-to-world y) 0)
-             ))))
+  (let [ship-textures (into [] (take c/enemy-height (repeatedly #(ship/create-pixel-ship-texture (rand-int Integer/MAX_VALUE)))))]
+    (for [row (range c/enemy-rows)
+          col (range c/enemy-columns)
+          :let [x (+ c/enemy-start-x (* col c/enemy-width-start))
+                y (+ c/enemy-start-y (* row c/enemy-height))]]
+      (doto (assoc (create-enemy-entity! screen (nth ship-textures row) col)
+              :hp (if (= row (- c/enemy-rows 1)) 2 1)
+              :boss? (if (= row (- c/enemy-rows 1)) true false)
+              :score (if (= row (- c/enemy-rows 1)) 400 200)
+              :row row :col col :home-x (c/screen-to-world x) :home-y (c/screen-to-world y))
+        (body-position! (c/screen-to-world x) (c/screen-to-world y) 0))
+      )))
 
 (defn create-minis [screen ship-texture x y]
-  (let [bonus-group (rand-keyword)]
+  (let [bonus-group (c/rand-keyword)]
     (update! screen bonus-group 4)
     (doseq [xx (range 4)]
-      (let [next-keyword (rand-keyword)]
+      (let [next-keyword (c/rand-keyword)]
         (update! screen next-keyword {:f create-mini-entity! :args [screen ship-texture x y bonus-group]})
         (add-timer! screen next-keyword (* 0.15 xx)))))
   )
 
 (defn move [screen entity]
   (let [ms (:movement-state entity)
-        entity (update-home entity screen)]
+        entity (update-home entity screen)];(update-emitter entity screen)
+    (update-emitter screen entity)
     (cond (= :drifting ms)
           (update-drift entity screen)
           (= :attacking ms)
           (update-from-spline entity)
           (= :returning ms)
-          (update-returning entity screen))
-    ))
+          (update-returning entity screen))))
+
+(defn update-emitter [screen entity]
+  (if (some? (:spark-emitter entity))
+    (spark/update-emitter (:spark-emitter entity) entity))
+  entity)
 
 (defn drop-bomb [screen entity]
   (let [ms (:movement-state entity)
@@ -135,36 +141,50 @@
                     (bomb/create-bomb screen (:x entity) (- (:y entity) (c/screen-to-world 6))))
               (assoc entity :ticks-to-bomb (- (:ticks-to-bomb entity) 1))))
           :else entity
-        )))
-
-(defn rand-keyword [] (keyword (str (java.util.UUID/randomUUID))))
+          )))
 
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
         (if-let [x (:x enemy)]
-          (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behaviorx
-                (do
-                  ;(create-minis screen (:ship-texture enemy) x (:y enemy)) ;handy for testing!
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
-                  (remove #(or (= enemy %)
-                               (= other-entity %))
-                          (conj entities (exp/create-explosion x (:y enemy)))))
-                (= :attacking (:movement-state enemy))
-                (do
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
-                  (remove #(or (= enemy %)
-                               (= other-entity %))
-                          (conj entities (exp/create-explosion x (:y enemy)))))
-                (= :returning (:movement-state enemy))
-                (do
-                  (create-minis screen (:ship-texture enemy) x (:y enemy))
-                  (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
-                  (remove #(or (= enemy %)
-                               (= other-entity %))
-                          (conj entities (exp/create-explosion x (:y enemy)))
-                          ))
-                :else nil
-                ))))
+          (let [hp (- (:hp enemy) 1)]
+            (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behaviors
+                  (if (= hp 0)
+                    (explode-enemy enemy other-entity screen entities)
+                    (spark-enemy enemy other-entity screen entities))
+                  (= :attacking (:movement-state enemy))
+                  (if (= hp 0)
+                    (explode-enemy enemy other-entity screen entities)
+                    (spark-enemy enemy other-entity screen entities))
+                  (= :returning (:movement-state enemy))
+                  (do
+                    (if (not (:boss? enemy))
+                      (create-minis screen (:ship-texture enemy) x (:y enemy)))
+                    (if (= hp 0)
+                      (explode-enemy enemy other-entity screen entities)
+                      (spark-enemy enemy other-entity screen entities)))
+                  :else nil
+                  )))))
+
+(defn- explode-enemy [enemy other-entity screen entities]
+  (let [spark-emitter-id (:spark-emitter enemy)]
+    (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
+    (if (some? spark-emitter-id)
+      (spark/remove-spark-emitter spark-emitter-id))
+    (remove #(or (= enemy %)
+                 (= other-entity %))
+            (conj entities (exp/create-explosion (:x enemy) (:y enemy))))))
+
+(defn- spark-enemy [{:keys [:hp] :as enemy} other-entity screen entities]
+  (do
+    ;(prn :spark-enemy)
+    (let [spark-emitter-id (spark/create-spark-emitter enemy)]
+      (sound "explosion.ogg" :play 0.35)
+      (remove #(= other-entity %) (map #(if
+                                          (= enemy %1)
+                                          (assoc %1 :hp (- hp 1) :spark-emitter spark-emitter-id)
+                                          %1)
+                                       entities)))))
+
 
 (defn handle-mini-collision [mini other-entity screen entities]
   (cond (:bullet? other-entity)
@@ -212,7 +232,7 @@
                             :else (conj (conj (conj (rest drifters) attacker) non-drifters) non-enemies))))
           :else entities)))
 
-(defn update-home [entity screen]
+(defn- update-home [entity screen]
   (let [on-left (< (:home-x entity) c/half-game-width-world)
         outward  (:formation-expand? screen)
         b (cond on-left outward
@@ -223,14 +243,14 @@
                          :else +)]
     (assoc entity :home-x (delta-x-fn (:home-x entity) (:drift-x-delta entity)) :home-y (delta-y-fn (:home-y entity) (:drift-y-delta entity)))))
 
-(defn update-drift [entity screen]
+(defn- update-drift [entity screen]
   (body-position! entity (:home-x entity) (:home-y entity) (:angle entity))
-  entity);)
+  entity)
 
-(defn update-from-spline [entity]
+(defn- update-from-spline [entity]
   (let [current-time (if (> (:current-time entity) 1)
-                         (- (:current-time entity) 1)
-                         (:current-time entity))
+                       (- (:current-time entity) 1)
+                       (:current-time entity))
         spline (:spline entity)
         v (b-spline! spline :value-at (vector-2 0 0) current-time)
         dv (b-spline! spline :derivative-at (vector-2 0 0) current-time)
@@ -250,7 +270,7 @@
           )
     ))
 
-(defn update-returning [{:keys [:home-x :home-y] :as entity} screen]
+(defn- update-returning [{:keys [:home-x :home-y] :as entity} screen]
   (let [cur-pos (vector-2 (:x entity) (:y entity))
         target-pos (vector-2 home-x home-y)
         dir-vec (vector-2! target-pos :sub cur-pos)

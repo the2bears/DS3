@@ -9,7 +9,8 @@
             [ds3.explosion :as exp]
             [ds3.fps :as fps]
             [ds3.hud :as hud]
-            [ds3.space :as sp])
+            [ds3.space :as space]
+            [ds3.spark :as spark])
 
   (:import [com.badlogic.gdx.physics.box2d Box2DDebugRenderer]))
 
@@ -45,8 +46,10 @@
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
                     (body-position! 0 (c/screen-to-world c/game-height) 0))
           bottom-oob (doto (create-oob-entity! screen (c/screen-to-world (+ c/game-width 20)) (c/screen-to-world 20))
-                    (body-position! (c/screen-to-world (- 10)) (c/screen-to-world (- 20)) 0))
-          space (sp/create-space)]
+                       (body-position! (c/screen-to-world (- 10)) (c/screen-to-world (- 20)) 0))
+          space (space/create-space)]
+      (spark/init-spark screen)
+
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        space]))
@@ -67,6 +70,7 @@
                   (->> entities
                        (step! screen)
                        (check-for-input screen)
+                       (spark/handle-sparks screen)
                        (handle-all-entities screen)
                        (enemy/handle-attack screen)
                        (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
@@ -114,9 +118,9 @@
                         entities)
       ;default pulls a function/args map and executes it - see mini enemies
       (let [to-do ((:id screen) screen)
-                    new-entity (apply (:f to-do) (:args to-do))]
-                (update! screen (:id screen) nil)
-                (conj entities new-entity))))
+            new-entity (apply (:f to-do) (:args to-do))]
+        (update! screen (:id screen) nil)
+        (conj entities new-entity))))
 
   :on-pause
   (fn [{:keys [game-state] :as screen} entities]
@@ -124,7 +128,7 @@
       (if (= game-state :in-game) (update! screen :game-state :paused))
       entities))
 
-  :on-key-up
+  :on-key-down
   (fn [screen entities]
     (case (:game-state screen)
       :in-game
@@ -168,12 +172,12 @@
        (map (fn [entity]
               (cond (:ship? entity) (ship/move-player-tick screen entity)
                     (:enemy? entity) (->> entity
-                                         (enemy/move screen)
-                                         (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
+                                          (enemy/move screen)
+                                          (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:bomb? entity) (bomb/animate-bomb screen entity)
-                    (:star? entity) (sp/move-star screen entity)
-                    ;(:mini? entity) (do (prn :found-mini) entity)
+                    (:star? entity) (space/move-star screen entity)
+                    (:spark? entity) (spark/update-spark screen entity)
                     :else entity)))
        (ship/collide-with-enemy? screen)
        ))
@@ -235,9 +239,9 @@
 (defn create-oob-entity!
   [screen width height]
   (let [rect (bundle nil)]
-  (assoc rect
-         :body (create-oob-body! screen width height)
-         :width width :height height)))
+    (assoc rect
+      :body (create-oob-body! screen width height)
+      :width width :height height)))
 
 (defn create-oob-body!
   [screen width height]
@@ -253,7 +257,7 @@
            :is-sensor true
            :density 1 :restitution 1 :shape )
          (body! body :create-fixture))
-body))
+    body))
 
 (-> main-screen :entities deref)
 

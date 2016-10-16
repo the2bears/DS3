@@ -17,13 +17,15 @@
 
 (def ^:const half-game-width-world (screen-to-world (/ game-width 2)))
 
+(def ^:const half-game-height-world (screen-to-world (/ game-height 2)))
+
 (def ^:const ship-mp-xoffset 6)
 
 (def ^:const ship-mp-yoffset 10)
 
-(def ^:const enemy-rows 5)
+(def ^:const enemy-rows 5);5
 
-(def ^:const enemy-columns 10)
+(def ^:const enemy-columns 10);10
 
 (def ^:const center (float (/ (- enemy-columns 1) 2)))
 
@@ -52,3 +54,4 @@
 (defn distance-from-center [n]
    (Math/abs (- center n)))
 
+(defn rand-keyword [] (keyword (str (java.util.UUID/randomUUID))))
