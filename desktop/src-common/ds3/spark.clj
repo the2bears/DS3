@@ -9,7 +9,8 @@
 (def spark-textures (atom []))
 (def spark-emitters (atom []))
 (def removed-emitters (atom {}))
-(def spark-speed-slow (c/screen-to-world -0.3))
+(def spark-speed-slow (c/screen-to-world -0.2))
+(def yellows [(color :black)(color :orange)(color :yellow)(color :white)])
 (def blues [(color :black)(color :blue)(color :cyan)(color :white)])
 
 (defn- create-spark-texture [c]
@@ -33,7 +34,7 @@
   (vector-2 0 spark-speed-slow :rotate (rand-int 360)))
 
 (defn- random-ticks []
-  (+ 25 (rand-int 45)))
+  (+ 20 (rand-int 40)))
 
 (defn init-spark [screen]
   (do

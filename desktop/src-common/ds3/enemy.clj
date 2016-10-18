@@ -225,7 +225,7 @@
                           entity (first drifters)
                           attacker (cond entity
                                          (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
-                                           :spline (splines/calibrate-spline (:x entity) (:y entity) (:row entity)))
+                                           :spline (splines/calibrate-spline entity))
                                          :else nil)]
                       ;(prn :entities (count entities) :enemies (count enemies) :non-enemies (count non-enemies) :drifters (count drifters) :non-drifters (count non-drifters))
                       (cond (nil? attacker) entities

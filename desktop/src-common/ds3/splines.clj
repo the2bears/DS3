@@ -17,7 +17,7 @@
   (into [] (map (fn[[x y]]
        (vector-2 x y)) p)))
 
-(defn calibrate-spline [x y row]
+(defn calibrate-spline [{:keys [:x :y :row] :as entity}]
   (let [w (c/screen-to-world c/game-width)
         h (c/screen-to-world c/game-height)
         hw (/ w 2.0)
@@ -31,17 +31,23 @@
         half-w (if x-left (/ w 2) (- (/ w 2)))
         ty (- y hook-near-x)
         dy (/ (- ty bottom-y) 5)
-        which-spline (case row
-                       ;loop
-                       (0 1)[[x y][x y][x (+ y hook-near-x)][(alt-x-fn x hook-near-x) (+ y hook-near-x)][(alt-x-fn x hook-near-x) ty]
-                             [(+ x half-w) (- ty (* 2 dy))][(+ x half-w) (- ty (* 6.2 dy))][x (- ty (* 6.2 dy))][x (- ty (* 2 dy))]
-                             [(+ x half-w) (- ty (* 1 dy))][(+ x half-w) (- ty (* 7 dy))][(+ x half-w) (- ty (* 7 dy))]]
-                       ;back-n-forth
-                       (2 3) [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
-                              [x1 (- ty dy)][x1 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x4 (- hook-far-x)][x4 (- hook-far-x)]]
-                       ;back-n-forth-n-back
-                       4 [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
-                          [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 bottom-y][x3 (- hook-far-x)][x3 (- hook-far-x)]])
+        boss? (:boss? entity false)
+        which-spline (if boss?
+                       (case row
+                         ;back-n-forth-n-back
+                         4 [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
+                            [x1 (- ty dy)][x1 (- ty (* 2 dy))][x2 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x1 bottom-y][x3 (- hook-far-x)][x3 (- hook-far-x)]]
+                         ;capture
+                         5 [[x y][x y][x  (+ y (/ dy 2))][(+ x half-w) (+ y (/ dy 2))][(+ x half-w) (- ty (* 1 dy))][x (- ty (* 2 dy))][x (- ty (* 3 dy))][x (- ty (* 4 dy))][x (- ty (* 4 dy))]])
+                       (case row
+                         ;loop
+                         (0 1)[[x y][x y][x (+ y hook-near-x)][(alt-x-fn x hook-near-x) (+ y hook-near-x)][(alt-x-fn x hook-near-x) ty]
+                               [(+ x half-w) (- ty (* 2 dy))][(+ x half-w) (- ty (* 6.2 dy))][x (- ty (* 6.2 dy))][x (- ty (* 2 dy))]
+                               [(+ x half-w) (- ty (* 1 dy))][(+ x half-w) (- ty (* 7 dy))][(+ x half-w) (- ty (* 7 dy))]]
+                         ;back-n-forth
+                         (2 3) [[x y][x y][x (+ y hook-near-x)][(x-fn x hook-near-x) (+ y hook-near-x)][(x-fn x hook-near-x) ty]
+                                [x1 (- ty dy)][x1 (- ty (* 3 dy))][x2 (- ty (* 4 dy))][x4 (- hook-far-x)][x4 (- hook-far-x)]]))
         points-vec (points-to-vector-2 which-spline)
         spline (b-spline points-vec 3 false)]
     spline))
+
