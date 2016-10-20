@@ -26,7 +26,9 @@
                   {:x 4, :y 5} {:x 1, :y 6} {:x 2, :y 6} {:x 3, :y 6} {:x 1, :y 7} {:x 2, :y 7} {:x 3, :y 7} {:x 1, :y 8} {:x 2, :y 8}
                   {:x 3, :y 8} {:x 1, :y 9} {:x 2, :y 9} {:x 3, :y 9} {:x 4, :y 9} {:x 3, :y 10} {:x 4, :y 10} {:x 5, :y 10}]}})
 
-(def state-machine {:drifting :attacking :attacking :returning :returning :drifting})
+(def state-machine {:drifting :attacking :attacking :returning :returning :drifting
+                    :capturing :dropping :dropping :returning
+                    :guarding :towing :towing :drifting})
 
 (def starting-state :drifting)
 
@@ -229,7 +231,10 @@
                                          :else nil)]
                       ;(prn :entities (count entities) :enemies (count enemies) :non-enemies (count non-enemies) :drifters (count drifters) :non-drifters (count non-drifters))
                       (cond (nil? attacker) entities
-                            :else (conj (conj (conj (rest drifters) attacker) non-drifters) non-enemies))))
+                            :else (-> (rest drifters)
+                                      (conj attacker)
+                                      (conj non-drifters)
+                                      (conj non-enemies)))))
           :else entities)))
 
 (defn- update-home [entity screen]

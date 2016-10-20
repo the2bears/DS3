@@ -128,7 +128,7 @@
       (if (= game-state :in-game) (update! screen :game-state :paused))
       entities))
 
-  :on-key-down
+  :on-key-up
   (fn [screen entities]
     (case (:game-state screen)
       :in-game
