@@ -13,7 +13,8 @@
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
 (declare create-enemy-body! create-mini-body! create-minis explode-enemy rand-keyword
-         spark-enemy update-drift update-from-spline update-emitter update-home update-returning)
+         spark-enemy update-drift update-from-spline update-dropping update-emitter
+         update-home update-returning)
 
 (def boss
   {:name :ds3-boss
@@ -27,13 +28,14 @@
                   {:x 3, :y 8} {:x 1, :y 9} {:x 2, :y 9} {:x 3, :y 9} {:x 4, :y 9} {:x 3, :y 10} {:x 4, :y 10} {:x 5, :y 10}]}})
 
 (def state-machine {:drifting :attacking :attacking :returning :returning :drifting
-                    :capturing :dropping :dropping :returning
+                    :capturing :dropping :dropping :returning ;:beaming :beaming
                     :guarding :towing :towing :drifting})
 
 (def starting-state :drifting)
 
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
+(def dropping-speed (- (c/screen-to-world 0.6)))
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
@@ -123,9 +125,15 @@
     (cond (= :drifting ms)
           (update-drift entity screen)
           (= :attacking ms)
-          (update-from-spline entity)
+          (update-from-spline entity screen)
+          (= :capturing ms)
+          (update-from-spline entity screen)
           (= :returning ms)
-          (update-returning entity screen))))
+          (update-returning entity screen)
+          (= :dropping ms)
+          (update-dropping entity screen)
+          (= :beaming ms)
+          entity)))
 
 (defn update-emitter [screen entity]
   (if (some? (:spark-emitter entity))
@@ -148,16 +156,17 @@
 (defn handle-collision [enemy other-entity screen entities]
   (cond (:bullet? other-entity)
         (if-let [x (:x enemy)]
-          (let [hp (- (:hp enemy) 1)]
-            (cond (= :drifting (:movement-state enemy));Keep these separate as there will eventually be different behaviors
+          (let [hp (- (:hp enemy) 1)
+                m-s (:movement-state enemy)]
+            (cond (= :drifting m-s);Keep these separate as there will eventually be different behaviors
                   (if (= hp 0)
                     (explode-enemy enemy other-entity screen entities)
                     (spark-enemy enemy other-entity screen entities))
-                  (= :attacking (:movement-state enemy))
+                  (or (= :capturing m-s) (= :dropping m-s) (= :beaming m-s) (= :attacking m-s))
                   (if (= hp 0)
                     (explode-enemy enemy other-entity screen entities)
                     (spark-enemy enemy other-entity screen entities))
-                  (= :returning (:movement-state enemy))
+                  (= :returning m-s)
                   (do
                     (if (not (:boss? enemy))
                       (create-minis screen (:ship-texture enemy) x (:y enemy)))
@@ -224,10 +233,16 @@
                           non-enemies (filter #(nil? (:enemy? %)) entities)
                           drifters (shuffle (filter #(= (:movement-state %) :drifting) enemies))
                           non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
+                          capturers (filter #(= (:movement-state %) :capturing) non-drifters)
                           entity (first drifters)
                           attacker (cond entity
-                                         (assoc entity :movement-state (state-machine (:movement-state entity)) :current-time 0
-                                           :spline (splines/calibrate-spline entity))
+                                         (if (and (:boss? entity) (empty? capturers))
+                                           (let [n-m-s :capturing]
+                                             (assoc entity :movement-state n-m-s :current-time 0
+                                               :spline (splines/calibrate-spline (assoc entity :movement-state n-m-s))))
+                                           (let [n-m-s (state-machine (:movement-state entity))]
+                                             (assoc entity :movement-state n-m-s :current-time 0
+                                               :spline (splines/calibrate-spline (assoc entity :movement-state n-m-s)))))
                                          :else nil)]
                       ;(prn :entities (count entities) :enemies (count enemies) :non-enemies (count non-enemies) :drifters (count drifters) :non-drifters (count non-drifters))
                       (cond (nil? attacker) entities
@@ -252,7 +267,7 @@
   (body-position! entity (:home-x entity) (:home-y entity) (:angle entity))
   entity)
 
-(defn- update-from-spline [entity]
+(defn- update-from-spline [entity screen]
   (let [current-time (if (> (:current-time entity) 1)
                        (- (:current-time entity) 1)
                        (:current-time entity))
@@ -266,8 +281,13 @@
         y (y v)]
     (cond (> (:current-time entity) 1)
           (do
-            (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
-            (assoc entity :movement-state (state-machine (:movement-state entity))))
+            (if (not= :capturing (:movement-state entity))
+              (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0))
+            (do
+              ;(let [next-keyword (c/rand-keyword)]
+                ;(update! screen next-keyword {:f assoc :args [entity :movement-state :dropping]})
+                ;(add-timer! screen next-keyword 2.0))
+              (assoc entity :movement-state (state-machine (:movement-state entity)))))
           :else
           (do
             (body-position! entity x y a)
@@ -290,3 +310,15 @@
             (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
             entity))
     ))
+
+(defn- update-dropping [{:keys [:x :y] :as entity} screen]
+  (cond (> y (- (c/screen-to-world 10)))
+        (do
+          (body-position! entity x (+ y dropping-speed) 180)
+          entity)
+        :else
+        (do
+          (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
+          (assoc entity :movement-state (state-machine (:movement-state entity))))))
+
+
