@@ -13,8 +13,8 @@
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
 (declare create-enemy-body! create-mini-body! create-minis explode-enemy rand-keyword
-         spark-enemy update-drift update-from-spline update-dropping update-emitter
-         update-home update-returning)
+         spark-enemy update-beaming update-drift update-from-spline update-dropping
+         update-emitter update-home update-returning)
 
 (def boss
   {:name :ds3-boss
@@ -28,14 +28,14 @@
                   {:x 3, :y 8} {:x 1, :y 9} {:x 2, :y 9} {:x 3, :y 9} {:x 4, :y 9} {:x 3, :y 10} {:x 4, :y 10} {:x 5, :y 10}]}})
 
 (def state-machine {:drifting :attacking :attacking :returning :returning :drifting
-                    :capturing :dropping :dropping :returning ;:beaming :beaming
+                    :capturing :beaming :beaming :dropping :dropping :returning
                     :guarding :towing :towing :drifting})
 
 (def starting-state :drifting)
 
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
-(def dropping-speed (- (c/screen-to-world 0.6)))
+(def dropping-speed (- (c/screen-to-world 0.7)))
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
@@ -44,6 +44,7 @@
 (def ticks-next-bomb-max-delta 60)
 (def large-size (c/screen-to-world 16))
 (def mini-size (c/screen-to-world 10))
+(def beaming-ticks 120)
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -133,6 +134,8 @@
           (= :dropping ms)
           (update-dropping entity screen)
           (= :beaming ms)
+          (update-beaming entity screen)
+          :Else
           entity)))
 
 (defn update-emitter [screen entity]
@@ -282,12 +285,10 @@
     (cond (> (:current-time entity) 1)
           (do
             (if (not= :capturing (:movement-state entity))
-              (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0))
-            (do
-              ;(let [next-keyword (c/rand-keyword)]
-                ;(update! screen next-keyword {:f assoc :args [entity :movement-state :dropping]})
-                ;(add-timer! screen next-keyword 2.0))
-              (assoc entity :movement-state (state-machine (:movement-state entity)))))
+              (do
+                (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
+                (assoc entity :movement-state (state-machine (:movement-state entity))))
+              (assoc entity :beaming-ticks beaming-ticks :movement-state (state-machine (:movement-state entity)))))
           :else
           (do
             (body-position! entity x y a)
@@ -321,4 +322,8 @@
           (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
           (assoc entity :movement-state (state-machine (:movement-state entity))))))
 
-
+(defn- update-beaming [{:keys [:x :y :beaming-ticks] :as entity} screen]
+  (cond (> beaming-ticks 0)
+        (assoc entity :beaming-ticks (- beaming-ticks 1))
+        :else
+        (assoc entity :movement-state (state-machine (:movement-state entity)))))
