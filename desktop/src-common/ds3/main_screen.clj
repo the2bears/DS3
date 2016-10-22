@@ -44,7 +44,7 @@
                           :can-attack? false
                           :debug-renderer (Box2DDebugRenderer.))
           top-oob (doto (create-oob-entity! screen (c/screen-to-world c/game-width) (c/screen-to-world 20))
-                    (body-position! 0 (c/screen-to-world c/game-height) 0))
+                    (body-position! 0 (c/screen-to-world (+ 20 c/game-height)) 0))
           bottom-oob (doto (create-oob-entity! screen (c/screen-to-world (+ c/game-width 20)) (c/screen-to-world 20))
                        (body-position! (c/screen-to-world (- 10)) (c/screen-to-world (- 20)) 0))
           space (space/create-space)]
