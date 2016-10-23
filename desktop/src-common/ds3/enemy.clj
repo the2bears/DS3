@@ -290,7 +290,7 @@
                 (assoc entity :movement-state (state-machine (:movement-state entity))))
               (do
                 (list
-                  (beam/create-beam screen x y)
+                  (beam/create-beam screen (:x entity) (:y entity))
                   (assoc entity :beaming-ticks c/beaming-ticks :movement-state (state-machine (:movement-state entity)))))))
           :else
           (do
