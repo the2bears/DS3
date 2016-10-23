@@ -1,5 +1,7 @@
 (ns ds3.common)
 
+(def debug false)
+
 (def ^:const s-to-w-divider 50.0)
 
 (defn screen-to-world [x]
@@ -51,7 +53,7 @@
 
 (def ^:const enemy-start-y 170)
 
-(def ^:const beaming-ticks 120)
+(def ^:const beaming-ticks 180)
 
 (defn distance-from-center [n]
    (Math/abs (- center n)))

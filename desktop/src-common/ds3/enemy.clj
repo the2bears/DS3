@@ -51,7 +51,7 @@
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
             :width large-size :height large-size
-            :id (c/rand-keyword) :enemy? true :render-layer 70 :score 100
+            :id :enemy :enemy? true :render-layer 70 :score 100
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset))
             :drift-x-delta (* (c/distance-from-center col) c/drift-x-delta)
             :drift-y-delta (/ (* (* (c/distance-from-center col) (c/distance-from-center col)) c/drift-x-delta) 20.0)

@@ -17,8 +17,6 @@
 
 (declare check-for-input check-game-status create-oob-entity! create-oob-body! handle-all-entities main-screen on-new-game)
 
-(def debug false)
-
 (defgame ds3-game
   :on-create
   (fn [this]
@@ -80,7 +78,7 @@
                        (check-game-status screen)
                        (sort-by :render-layer)
                        (render! screen))]
-              (if debug
+              (if c/debug
                 (.render debug-renderer world (.combined camera)))
               entities)
             :else (->> entities
@@ -94,6 +92,8 @@
           entity2 (second-entity screen entities)]
       ;(prn :entity (:id entity) :entity2 (:id entity2))
       (cond
+        (:beam? entity) (beam/handle-collision entity entity2 screen entities)
+        (:beam? entity2) (beam/handle-collision entity2 entity screen entities)
         (:enemy? entity) (enemy/handle-collision entity entity2 screen entities)
         (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
         (:ship? entity) (ship/handle-collision entity entity2 screen entities)

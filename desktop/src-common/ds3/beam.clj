@@ -26,7 +26,7 @@
       :beam? true)))
 
 (defn- create-beam-body! [screen width height]
-  (let [body (add-body! screen (body-def :static))
+  (let [body (add-body! screen (body-def :dynamic))
         half-width (/ width 2)
         half-height (/ height 2)]
     (->> (polygon-shape :set-as-box half-width half-height(vector-2 half-width half-height) 0)
@@ -38,4 +38,14 @@
   (let [new-ticks (- beaming-ticks 1)]
     (if (= 0 beaming-ticks)
       nil
-      (assoc entity :beaming-ticks new-ticks))))
+      (do
+        (body! entity :apply-force-to-center (vector-2 0 0) true)
+        (assoc entity :beaming-ticks new-ticks)))))
+
+(defn handle-collision [beam other-entity screen entities]
+  (do
+    (cond (:ship? other-entity)
+        (do
+          (prn :captured!)
+          entities)
+        :else entities)))
