@@ -1,5 +1,6 @@
 (ns ds3.enemy
-  (:require [ds3.bomb :as bomb]
+  (:require [ds3.beam :as beam]
+            [ds3.bomb :as bomb]
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
@@ -44,7 +45,6 @@
 (def ticks-next-bomb-max-delta 60)
 (def large-size (c/screen-to-world 16))
 (def mini-size (c/screen-to-world 10))
-(def beaming-ticks 120)
 
 (defn create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -135,7 +135,7 @@
           (update-dropping entity screen)
           (= :beaming ms)
           (update-beaming entity screen)
-          :Else
+          :else
           entity)))
 
 (defn update-emitter [screen entity]
@@ -288,7 +288,10 @@
               (do
                 (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
                 (assoc entity :movement-state (state-machine (:movement-state entity))))
-              (assoc entity :beaming-ticks beaming-ticks :movement-state (state-machine (:movement-state entity)))))
+              (do
+                (list
+                  (beam/create-beam screen x y)
+                  (assoc entity :beaming-ticks c/beaming-ticks :movement-state (state-machine (:movement-state entity)))))))
           :else
           (do
             (body-position! entity x y a)

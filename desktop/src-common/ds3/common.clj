@@ -51,6 +51,8 @@
 
 (def ^:const enemy-start-y 170)
 
+(def ^:const beaming-ticks 120)
+
 (defn distance-from-center [n]
    (Math/abs (- center n)))
 
