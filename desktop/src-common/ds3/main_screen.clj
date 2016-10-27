@@ -122,7 +122,8 @@
                         entities)
       :capture-ship (do
                       (prn :capture-ship)
-                      (remove #(:ship? %) (conj entities (ship/create-ghost-entity! screen (:ship-x screen) (c/screen-to-world (/ c/game-height 15))))))
+                      ;(remove #(:ship? %) (conj entities (ship/create-ghost-entity! screen (:ship-x screen) (c/screen-to-world (/ c/game-height 15)))))
+                      entities)
       ;default pulls a function/args map and executes it - see mini enemies
       (let [to-do ((:id screen) screen)
             new-entity (apply (:f to-do) (:args to-do))]
