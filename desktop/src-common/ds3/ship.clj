@@ -15,7 +15,7 @@
 (def default-r2 (c/screen-to-world 1.0))
 
 (defn create-ship-entity! [screen]
-  (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE)]
+  (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE)];c/ghost-color)]
     (update! screen :ship-x (c/screen-to-world (/ c/game-width 2)))
     (doto (assoc pixel-ship
             :body (create-ship-body! screen)
@@ -37,7 +37,7 @@
 
 (defn- create-pixel-map-list
   ([seed c-model]
-   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc bollinger/model :seed seed)) c-model); (assoc bollinger/color-scheme :solid-color {:h 0.0 :s 1.0 :v 0.25}))
+   (let [ship-map (psc/color-pixel-ship (psc/create-pixel-ship (assoc bollinger/model :seed seed)) c-model)
          tags (keys (:pixels ship-map))
          pixels (:pixels ship-map)
          shape-builder (fn[s] (reduce (fn[acc n] (conj acc n)) [] s))]

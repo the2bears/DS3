@@ -1,4 +1,5 @@
-(ns ds3.common)
+(ns ds3.common
+  (:require [pixel-ships.bollinger :as bollinger :refer [color-scheme]]))
 
 (def debug false)
 
@@ -54,6 +55,8 @@
 (def ^:const enemy-start-y 170)
 
 (def ^:const beaming-ticks 180)
+
+(def ghost-color (assoc bollinger/color-scheme :sat-mid 0.12 :sat-delta 0.05))
 
 (defn distance-from-center [n]
    (Math/abs (- center n)))
