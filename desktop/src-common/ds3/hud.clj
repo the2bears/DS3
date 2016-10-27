@@ -59,11 +59,11 @@
             (= :paused (:game-state screen))
             (do
               (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
-              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "PAUSED" game-paused-x game-paused-y))
-            (> bonus 1)
-            (do
-              (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
-              (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str "x" bonus) 188.0 (- (game :height) p1-score-y))))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "PAUSED" game-paused-x game-paused-y)))
+      (if (> bonus 1)
+        (do
+          (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
+          (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str "x" bonus) 188.0 (- (game :height) p1-score-y))))
       (.end batch))
     (->> entities
          (count-mini-ships screen)

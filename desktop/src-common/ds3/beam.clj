@@ -28,7 +28,7 @@
       :width beam-width :height beam-height
       :render-layer 60
       :beaming-ticks c/beaming-ticks
-      :beam? true)))
+      :beam? true :id :beam)))
 
 (defn- create-beam-body! [screen width height]
   (let [body (add-body! screen (body-def :dynamic))
