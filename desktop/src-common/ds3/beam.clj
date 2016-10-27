@@ -1,5 +1,5 @@
 (ns ds3.beam
-  (:require [play-clj.core :refer [bundle color shape sound]]
+  (:require [play-clj.core :refer [add-timer! bundle color shape sound]]
             [play-clj.g2d :refer [animation animation->texture texture]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! chain-shape circle-shape fixture! fixture-def polygon-shape]]
             [play-clj.math :refer [vector-2]]
@@ -52,5 +52,6 @@
     (cond (:ship? other-entity)
         (do
           (prn :captured!)
+          (add-timer! screen :capture-ship 0)
           entities)
         :else entities)))

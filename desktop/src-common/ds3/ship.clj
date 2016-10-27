@@ -9,7 +9,7 @@
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
 
-(declare play-clj-color hsv-to-rgb create-ship-body! move draw-rect-pixelmap create-pixel-ship-texture)
+(declare play-clj-color hsv-to-rgb create-ghost-body! create-ship-body! move draw-rect-pixelmap create-pixel-ship-texture)
 
 (def speed (c/screen-to-world 1.5))
 (def default-r2 (c/screen-to-world 1.0))
@@ -25,7 +25,27 @@
       (body-position! (c/screen-to-world (/ c/game-width 2)) (c/screen-to-world (/ c/game-height 15)) 0)
       (body! :set-linear-velocity 0 0))))
 
-(defn create-ship-body!
+(defn- create-ship-body!
+  [screen]
+  (let [body (add-body! screen (body-def :dynamic))
+        ship-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
+    (->> ship-shape
+         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+         (body! body :create-fixture))
+    (.dispose ship-shape)
+    body))
+
+(defn create-ghost-entity! [screen x y]
+  (let [ghost-ship (create-pixel-ship-texture Integer/MAX_VALUE c/ghost-color)]
+    (doto (assoc ghost-ship
+            :body (create-ghost-body! screen)
+            :width (c/screen-to-world 16) :height (c/screen-to-world 16)
+            :id :ghost-ship :ghost? true :render-layer 90
+            :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
+      (body-position! x y 0)
+      (body! :set-linear-velocity 0 0))))
+
+(defn- create-ghost-body!
   [screen]
   (let [body (add-body! screen (body-def :dynamic))
         ship-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
