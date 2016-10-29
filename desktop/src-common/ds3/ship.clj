@@ -4,14 +4,15 @@
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.spark :as spark]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update!]]
+            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
 
-(declare play-clj-color hsv-to-rgb create-ghost-body! create-ship-body! move draw-rect-pixelmap create-pixel-ship-texture)
+(declare create-ghost-body! create-pixel-ship-texture create-ship-body! draw-rect-pixelmap hsv-to-rgb  move play-clj-color update-captured)
 
 (def speed (c/screen-to-world 1.5))
+(def tractor-beam-speed (c/screen-to-world 0.6))
 (def default-r2 (c/screen-to-world 1.0))
 
 (defn create-ship-entity! [screen]
@@ -21,6 +22,7 @@
             :body (create-ship-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
             :id :pixel-ship :ship? true :render-layer 90
+            :captured? false
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
       (body-position! (c/screen-to-world (/ c/game-width 2)) (c/screen-to-world (/ c/game-height 15)) 0)
       (body! :set-linear-velocity 0 0))))
@@ -114,12 +116,15 @@
 
 (defn move-player-tick [screen entity]
   (if (:ship? entity)
-    (cond
-      (key-pressed? :dpad-right)
-      (move screen entity :right)
-      (key-pressed? :dpad-left)
-      (move screen entity :left)
-      :else entity)
+    (cond (:captured? entity)
+          (update-captured screen entity)
+          :else
+          (cond
+            (key-pressed? :dpad-right)
+            (move screen entity :right)
+            (key-pressed? :dpad-left)
+            (move screen entity :left)
+            :else entity))
     entity)
   )
 
@@ -134,6 +139,21 @@
     (body-position! entity x-anchored y angle)
     (update! screen :ship-x x-anchored))
   entity)
+
+(defn- update-captured [screen {:keys [:captured-x :captured-y] :as entity}]
+  (let [cur-pos (vector-2 (:x entity) (:y entity))
+        target-pos (vector-2 captured-x captured-y)
+        dir-vec (vector-2! target-pos :sub cur-pos)
+        l (vector-2! dir-vec :len)]
+    (vector-2! dir-vec :set-length tractor-beam-speed)
+    (cond (< l tractor-beam-speed)
+          (do
+            (body-position! entity captured-x captured-y 0)
+            entity)
+          :else
+          (do
+            (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
+            entity))))
 
 (defn handle-collision [ship other-entity screen entities]
   (cond (:bomb? other-entity)

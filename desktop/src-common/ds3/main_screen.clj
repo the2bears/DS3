@@ -120,10 +120,11 @@
       :post-game-over (do
                         (update! screen :game-state :attract-mode)
                         entities)
-      :capture-ship (do
+      :capture-ship (let [ship (first (filter #(:ship? %) entities))
+                          boss (first (filter #(= (:movement-state %) :beaming) entities))
+                          all-others (filter #(nil? (:ship? %)) entities)]
                       (prn :capture-ship)
-                      ;(remove #(:ship? %) (conj entities (ship/create-ghost-entity! screen (:ship-x screen) (c/screen-to-world (/ c/game-height 15)))))
-                      entities)
+                      (conj all-others (assoc ship :captured? true :captured-x (:x boss) :captured-y (:y boss))))
       ;default pulls a function/args map and executes it - see mini enemies
       (let [to-do ((:id screen) screen)
             new-entity (apply (:f to-do) (:args to-do))]
