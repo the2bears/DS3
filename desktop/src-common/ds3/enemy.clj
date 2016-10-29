@@ -15,7 +15,7 @@
 
 (declare create-enemy-body! create-mini-body! create-minis explode-enemy rand-keyword
          spark-enemy update-beaming update-drift update-from-spline update-dropping
-         update-emitter update-home update-returning)
+         update-emitter update-home update-returning update-towing update-turning)
 
 (def boss
   {:name :ds3-boss
@@ -30,13 +30,15 @@
 
 (def state-machine {:drifting :attacking :attacking :returning :returning :drifting
                     :capturing :beaming :beaming :dropping :dropping :returning
-                    :guarding :towing :towing :drifting})
+                    :turning :towing :towing :drifting})
 
 (def starting-state :drifting)
 
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def dropping-speed (- (c/screen-to-world 0.7)))
+(def starting-angle 0)
+(def rotating-speed 3)
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
@@ -107,7 +109,7 @@
               :boss? (if (= row (- c/enemy-rows 1)) true false)
               :score (if (= row (- c/enemy-rows 1)) 400 200)
               :row row :col col :home-x (c/screen-to-world x) :home-y (c/screen-to-world y))
-        (body-position! (c/screen-to-world x) (c/screen-to-world y) 0))
+        (body-position! (c/screen-to-world x) (c/screen-to-world y) starting-angle))
       )))
 
 (defn create-minis [screen ship-texture x y]
@@ -135,6 +137,10 @@
           (update-dropping entity screen)
           (= :beaming ms)
           (update-beaming entity screen)
+          (= :turning ms)
+          (update-turning entity screen)
+          (= :towing ms)
+          (update-towing entity screen)
           :else
           entity)))
 
@@ -304,8 +310,7 @@
           (do
             (body-position! entity x y a)
             (assoc entity :current-time (+ current-time new-delta)))
-          )
-    ))
+          )))
 
 (defn- update-returning [{:keys [:home-x :home-y] :as entity} screen]
   (let [cur-pos (vector-2 (:x entity) (:y entity))
@@ -338,3 +343,16 @@
         (assoc entity :beaming-ticks (- beaming-ticks 1))
         :else
         (assoc entity :movement-state (state-machine (:movement-state entity)))))
+
+(defn- update-turning [{:keys [:x :y :angle] :as entity} screen]
+  (let [angle-diff (- angle starting-angle)
+        done-turning (< angle-diff rotating-speed)
+        new-angle (cond done-turning starting-angle
+                        :else (- angle rotating-speed))]
+    (body-position! entity x y new-angle)
+    (assoc entity :movement-state (cond done-turning (state-machine (:movement-state entity))
+                                        :else (:movement-state entity)))))
+
+(defn- update-towing [entity screen]
+  (let [entity2 (update-returning entity screen)]
+    entity2))

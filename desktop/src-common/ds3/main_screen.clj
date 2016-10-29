@@ -124,6 +124,9 @@
                           boss (first (filter #(= (:movement-state %) :beaming) entities))
                           all-others (filter #(nil? (:ship? %)) entities)]
                       (conj all-others (assoc ship :captured? true :captured-x (:x boss) :captured-y (-(:y boss) (c/screen-to-world c/capture-height)))))
+      :start-towing (let [boss (first (filter #(= (:movement-state %) :beaming) entities))
+                          all-others (filter #(not= (:movement-state %) :beaming) entities)]
+                      (conj (filter #(nil? (:beam? %)) all-others) (assoc boss :movement-state :turning)))
       ;default pulls a function/args map and executes it - see mini enemies
       (let [to-do ((:id screen) screen)
             new-entity (apply (:f to-do) (:args to-do))]

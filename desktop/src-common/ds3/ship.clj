@@ -4,7 +4,7 @@
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.spark :as spark]
-            [play-clj.core :refer [bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update! x y]]
+            [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* pixmap-format screen! update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
@@ -155,8 +155,9 @@
     (vector-2! dir-vec :set-length tractor-beam-speed)
     (cond (< l tractor-beam-speed)
           (do
+            (add-timer! screen :start-towing 0)
             (body-position! entity captured-x captured-y 0)
-            entity)
+            (create-ghost-entity! screen captured-x captured-y))
           :else
           (do
             (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
