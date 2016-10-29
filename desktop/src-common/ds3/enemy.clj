@@ -184,9 +184,17 @@
     (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
     (if (some? spark-emitter-id)
       (spark/remove-spark-emitter spark-emitter-id))
-    (remove #(or (= enemy %)
-                 (= other-entity %))
-            (conj entities (exp/create-explosion (:x enemy) (:y enemy))))))
+    (if (= (:movement-state enemy) :beaming)
+      (let [ship (first (filter #(:ship? %) entities))
+            all-others (filter #(nil? (:ship? %)) entities)
+            new-entities (conj all-others (assoc ship :captured? false))]
+        (remove #(or (= enemy %)
+                     (= other-entity %)
+                     (:beam? %))
+                (conj new-entities (exp/create-explosion (:x enemy) (:y enemy)))))
+      (remove #(or (= enemy %)
+                   (= other-entity %))
+              (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))))
 
 (defn- spark-enemy [{:keys [:hp] :as enemy} other-entity screen entities]
   (do

@@ -51,7 +51,6 @@
   (do
     (cond (:ship? other-entity)
         (do
-          (prn :captured!)
           (add-timer! screen :capture-ship 0)
           entities)
         :else entities)))

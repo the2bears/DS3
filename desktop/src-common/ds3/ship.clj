@@ -13,6 +13,7 @@
 
 (def speed (c/screen-to-world 1.5))
 (def tractor-beam-speed (c/screen-to-world 0.6))
+(def drop-speed (c/screen-to-world 1.1))
 (def default-r2 (c/screen-to-world 1.0))
 
 (defn create-ship-entity! [screen]
@@ -24,7 +25,7 @@
             :id :pixel-ship :ship? true :render-layer 90
             :captured? false
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
-      (body-position! (c/screen-to-world (/ c/game-width 2)) (c/screen-to-world (/ c/game-height 15)) 0)
+      (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-default 0)
       (body! :set-linear-velocity 0 0))))
 
 (defn- create-ship-body!
@@ -114,29 +115,35 @@
 
        ))))
 
-(defn move-player-tick [screen entity]
+(defn move-player-tick [screen {:keys [:x :y :angle] :as entity}]
   (if (:ship? entity)
-    (cond (:captured? entity)
-          (update-captured screen entity)
-          :else
-          (cond
-            (key-pressed? :dpad-right)
-            (move screen entity :right)
-            (key-pressed? :dpad-left)
-            (move screen entity :left)
-            :else entity))
-    entity)
-  )
+    (let [y-diff (- y c/ship-y-default)]
+      (cond (:captured? entity)
+            (update-captured screen entity)
+            :else
+            (cond
+              (key-pressed? :dpad-right)
+              (move screen entity :right)
+              (key-pressed? :dpad-left)
+              (move screen entity :left)
+              (> y-diff 0)
+              (move screen entity :straight)
+              :else entity)))
+    entity))
 
-(defn move [screen {:keys [:x :y :angle] :as entity} direction]
+(defn- move [screen {:keys [:x :y :angle] :as entity} direction]
   (let [mv-fn (case direction
                 :right +
-                :left -)
+                :left -
+                :straight (fn[x _] x))
         x (mv-fn x speed)
         x-anchored (cond (> x c/game-width-adj) c/game-width-adj
                          (< x 0) 0
-                         :else x)]
-    (body-position! entity x-anchored y angle)
+                         :else x)
+        y-diff (- y c/ship-y-default)
+        y-anchored (cond (> y-diff drop-speed) (- y drop-speed)
+                         :else c/ship-y-default)]
+    (body-position! entity x-anchored y-anchored angle)
     (update! screen :ship-x x-anchored))
   entity)
 

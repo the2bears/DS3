@@ -26,6 +26,8 @@
 
 (def ^:const ship-mp-yoffset 10)
 
+(def ^:const ship-y-default (screen-to-world (/ game-height 15)))
+
 (def ^:const enemy-rows 5);5
 
 (def ^:const enemy-columns 10);10
@@ -49,6 +51,8 @@
 (def ^:const drift-x-delta (screen-to-world (/ (- enemy-width-max enemy-width-min) drift-ticks)))
 
 (def ^:const enemy-height 20)
+
+(def ^:const capture-height 12)
 
 (def ^:const enemy-start-x (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2));(- (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2) ship-mp-xoffset))
 
