@@ -49,7 +49,7 @@
 (def large-size (c/screen-to-world 16))
 (def mini-size (c/screen-to-world 10))
 
-(defn create-enemy-entity! [screen ship-texture col]
+(defn- create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
     (doto (assoc pixel-ship
             :body (create-enemy-body! screen)
@@ -63,7 +63,7 @@
             :ship-texture ship-texture)
       (body! :set-linear-velocity 0 0))))
 
-(defn create-mini-entity! [screen ship-texture x y bonus-group]
+(defn- create-mini-entity! [screen ship-texture x y bonus-group]
   (let [mini-ship (assoc (texture ship-texture)
                     :body (create-mini-body! screen)
                     :x x :y y
@@ -79,7 +79,7 @@
     mini-ship
     ))
 
-(defn create-enemy-body!
+(defn- create-enemy-body!
   [screen]
   (let [body (add-body! screen (body-def :dynamic :bullet true))
         enemy-shape (polygon-shape :set-as-box (c/screen-to-world 3) (c/screen-to-world 3) (vector-2 0 0) 0)]
@@ -89,7 +89,7 @@
     (.dispose enemy-shape)
     body))
 
-(defn create-mini-body!
+(defn- create-mini-body!
   [screen]
   (let [body (add-body! screen (body-def :dynamic :bullet true))
         enemy-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
@@ -178,7 +178,7 @@
                     (spark-enemy enemy other-entity screen entities))
                   (= :returning m-s)
                   (do
-                    (if (not (:boss? enemy))
+                    (if (not (or (:boss? enemy) (= :ghost-ship (:id enemy))))
                       (create-minis screen (:ship-texture enemy) x (:y enemy)))
                     (if (= hp 0)
                       (explode-enemy enemy other-entity screen entities)
@@ -191,7 +191,6 @@
     (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
     (if (some? spark-emitter-id)
       (spark/remove-spark-emitter spark-emitter-id))
-
     (cond (= (:movement-state enemy) :beaming)
           (let [ship (first (filter #(:ship? %) entities))
                 all-others (filter #(nil? (:ship? %)) entities)
