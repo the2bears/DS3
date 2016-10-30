@@ -52,7 +52,9 @@
 
 (def ^:const enemy-height 20)
 
-(def ^:const capture-height 12)
+(def ^:const capture-height 14)
+
+(def ^:const capture-height-shifted -14)
 
 (def ^:const enemy-start-x (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2));(- (/ (- game-width (* (- enemy-columns 1) enemy-width-start)) 2) ship-mp-xoffset))
 

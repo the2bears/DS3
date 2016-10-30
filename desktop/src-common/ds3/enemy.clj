@@ -37,8 +37,9 @@
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def dropping-speed (- (c/screen-to-world 0.7)))
+(def towing-speed (c/screen-to-world 0.9))
 (def starting-angle 0)
-(def rotating-speed 3)
+(def rotating-speed 5)
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
@@ -312,21 +313,23 @@
             (assoc entity :current-time (+ current-time new-delta)))
           )))
 
-(defn- update-returning [{:keys [:home-x :home-y] :as entity} screen]
-  (let [cur-pos (vector-2 (:x entity) (:y entity))
-        target-pos (vector-2 home-x home-y)
-        dir-vec (vector-2! target-pos :sub cur-pos)
-        l (vector-2! dir-vec :len)]
-    (vector-2! dir-vec :set-length returning-speed)
-    (cond (< l returning-speed)
-          (do
-            (body-position! entity home-x home-y 0)
-            (assoc entity :movement-state (state-machine (:movement-state entity))))
-          :else
-          (do
-            (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
-            entity))
-    ))
+(defn- update-returning
+  ([entity screen]
+   (update-returning entity screen returning-speed))
+  ([{:keys [:home-x :home-y] :as entity} screen speed]
+   (let [cur-pos (vector-2 (:x entity) (:y entity))
+         target-pos (vector-2 home-x home-y)
+         dir-vec (vector-2! target-pos :sub cur-pos)
+         l (vector-2! dir-vec :len)]
+     (vector-2! dir-vec :set-length speed)
+     (cond (< l returning-speed)
+           (do
+             (body-position! entity home-x home-y 0)
+             (assoc entity :movement-state (state-machine (:movement-state entity))))
+           :else
+           (do
+             (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
+             entity)))))
 
 (defn- update-dropping [{:keys [:x :y] :as entity} screen]
   (cond (> y (- (c/screen-to-world 10)))
@@ -354,5 +357,4 @@
                                         :else (:movement-state entity)))))
 
 (defn- update-towing [entity screen]
-  (let [entity2 (update-returning entity screen)]
-    entity2))
+  (update-returning entity screen towing-speed))

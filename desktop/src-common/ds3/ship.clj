@@ -12,7 +12,7 @@
 (declare create-ghost-body! create-pixel-ship-texture create-ship-body! draw-rect-pixelmap hsv-to-rgb  move play-clj-color update-captured)
 
 (def speed (c/screen-to-world 1.5))
-(def tractor-beam-speed (c/screen-to-world 0.6))
+(def tractor-beam-speed (c/screen-to-world 0.75))
 (def drop-speed (c/screen-to-world 1.1))
 (def default-r2 (c/screen-to-world 1.0))
 
@@ -44,6 +44,7 @@
             :body (create-ghost-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
             :id :ghost-ship :ghost? true :render-layer 90
+            :below? true :shift-position? false :capture-height (c/screen-to-world c/capture-height)
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
       (body-position! x y 0)
       (body! :set-linear-velocity 0 0))))
@@ -196,3 +197,18 @@
             :else entities))
     entities
     ))
+
+(defn handle-ghost [screen entities ghost]
+  (let [master (first (filter #(:master? %) entities))
+        captured-x (:x master)
+        captured-y (:y master)
+        capture-height (:capture-height ghost)
+        shifting (and (:shift-position? ghost) (> capture-height (c/screen-to-world c/capture-height-shifted)))
+        start-shifting (and (:below? ghost) (not shifting) (= :drifting (:movement-state master)))
+        stop-shifting (and shifting (< capture-height (c/screen-to-world c/capture-height-shifted)))
+        new-ghost (cond start-shifting (assoc ghost :shift-position? true :render-layer 60 :below? false)
+                        shifting (assoc ghost :capture-height (- capture-height tractor-beam-speed))
+                        stop-shifting (assoc ghost :shif-position? false)
+                        :else ghost)]
+    (body-position! new-ghost captured-x (- captured-y (:capture-height new-ghost)) 0)
+    new-ghost))

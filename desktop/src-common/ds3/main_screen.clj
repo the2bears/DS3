@@ -57,7 +57,6 @@
 
   :on-render
   (fn [screen entities]
-    (update! screen :ticks (inc (:ticks screen)))
     (let [debug-renderer (:debug-renderer screen)
           world (:world screen)
           camera (:camera screen)
@@ -67,20 +66,22 @@
       (cond (= (mod ticks c/drift-ticks) 0)
             (update! screen :formation-expand? (not (:formation-expand? screen))))
       (cond (not= :paused game-state)
-            (let [entities
-                  (->> entities
-                       (step! screen)
-                       (check-for-input screen)
-                       (spark/handle-sparks screen)
-                       (handle-all-entities screen)
-                       (enemy/handle-attack screen)
-                       (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
-                       (check-game-status screen)
-                       (sort-by :render-layer)
-                       (render! screen))]
-              (if c/debug
-                (.render debug-renderer world (.combined camera)))
-              entities)
+            (do
+              (update! screen :ticks (inc (:ticks screen)))
+              (let [entities
+                    (->> entities
+                         (step! screen)
+                         (check-for-input screen)
+                         (spark/handle-sparks screen)
+                         (handle-all-entities screen)
+                         (enemy/handle-attack screen)
+                         (flatten);This is here because when an enemy shoots for one frame it's not a map where :enemy? is true
+                         (check-game-status screen)
+                         (sort-by :render-layer)
+                         (render! screen))]
+                (if c/debug
+                  (.render debug-renderer world (.combined camera)))
+                entities))
             :else (->> entities
                        (check-game-status screen)
                        (render! screen)
@@ -126,7 +127,7 @@
                       (conj all-others (assoc ship :captured? true :captured-x (:x boss) :captured-y (-(:y boss) (c/screen-to-world c/capture-height)))))
       :start-towing (let [boss (first (filter #(= (:movement-state %) :beaming) entities))
                           all-others (filter #(not= (:movement-state %) :beaming) entities)]
-                      (conj (filter #(nil? (:beam? %)) all-others) (assoc boss :movement-state :turning)))
+                      (conj (filter #(nil? (:beam? %)) all-others) (assoc boss :master? true :movement-state :turning)))
       ;default pulls a function/args map and executes it - see mini enemies
       (let [to-do ((:id screen) screen)
             new-entity (apply (:f to-do) (:args to-do))]
@@ -190,6 +191,7 @@
                     (:star? entity) (space/move-star screen entity)
                     (:spark? entity) (spark/update-spark screen entity)
                     (:beam? entity) (beam/handle-beam entity)
+                    (:ghost? entity) (ship/handle-ghost screen entities entity)
                     :else entity)))
        (ship/collide-with-enemy? screen)
        ))
