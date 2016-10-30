@@ -43,7 +43,7 @@
     (doto (assoc ghost-ship
             :body (create-ghost-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :ghost-ship :ghost? true :render-layer 90 :score 500
+            :id :ghost-ship :ghost? true :render-layer 90
             :below? true :shift-position? false :capture-height (c/screen-to-world c/capture-height)
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
       (body-position! x y 0)
@@ -210,7 +210,7 @@
             stop-shifting (and shifting (< capture-height (c/screen-to-world c/capture-height-shifted)))
             new-ghost (cond start-shifting (assoc ghost :shift-position? true :render-layer 60 :below? false)
                             shifting (assoc ghost :capture-height (- capture-height tractor-beam-speed))
-                            stop-shifting (assoc ghost :shif-position? false)
+                            stop-shifting (assoc ghost :shift-position? false)
                             :else ghost)]
         (body-position! new-ghost captured-x (- captured-y (:capture-height new-ghost)) 0)
         new-ghost)

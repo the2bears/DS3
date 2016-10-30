@@ -13,7 +13,7 @@
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
   (:import [com.badlogic.gdx.graphics Pixmap Texture TextureData Pixmap$Format]))
 
-(declare create-enemy-body! create-mini-body! create-minis explode-enemy rand-keyword
+(declare convert-ghost create-enemy-body! create-mini-body! create-minis explode-enemy rand-keyword
          spark-enemy update-beaming update-drift update-from-spline update-dropping
          update-emitter update-home update-returning update-towing update-turning)
 
@@ -191,19 +191,28 @@
     (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
     (if (some? spark-emitter-id)
       (spark/remove-spark-emitter spark-emitter-id))
-    (if (:master? enemy)
-      (prn :explode-enemy :master-destroyed))
-    (if (= (:movement-state enemy) :beaming)
-      (let [ship (first (filter #(:ship? %) entities))
-            all-others (filter #(nil? (:ship? %)) entities)
-            new-entities (conj all-others (assoc ship :captured? false))]
-        (remove #(or (= enemy %)
-                     (= other-entity %)
-                     (:beam? %))
-                (conj new-entities (exp/create-explosion (:x enemy) (:y enemy)))))
-      (remove #(or (= enemy %)
-                   (= other-entity %))
-              (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))))
+
+    (cond (= (:movement-state enemy) :beaming)
+          (let [ship (first (filter #(:ship? %) entities))
+                all-others (filter #(nil? (:ship? %)) entities)
+                new-entities (conj all-others (assoc ship :captured? false))]
+            (remove #(or (= enemy %)
+                         (= other-entity %)
+                         (:beam? %))
+                    (conj new-entities (exp/create-explosion (:x enemy) (:y enemy)))))
+          (:master? enemy)
+          (let [ghost (first (filter #(:ghost? %) entities))
+                converted-ghost (convert-ghost ghost enemy)]
+            (remove #(or (= enemy %)
+                         (= other-entity %)
+                         (= ghost %))
+                    (-> entities
+                        (conj (exp/create-explosion (:x enemy) (:y enemy)))
+                        (conj converted-ghost))))
+          :else
+          (remove #(or (= enemy %)
+                       (= other-entity %))
+                  (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))))
 
 (defn- spark-enemy [{:keys [:hp] :as enemy} other-entity screen entities]
   (do
@@ -216,6 +225,14 @@
                                           %1)
                                        entities)))))
 
+(defn- convert-ghost [ghost master]
+  (assoc ghost :ghost? false :enemy? true
+    :drift-x-delta (:drift-x-delta master)
+    :drift-y-delta (:drift-y-delta master)
+    :row (:row master) :col (:col master) :home-x (:home-x master) :home-y (:home-y master)
+    :movement-state :returning :hp 1 :score 500
+    :ticks-to-bomb (rand-int default-ticks-first-bomb)
+    ))
 
 (defn handle-mini-collision [mini other-entity screen entities]
   (cond (:bullet? other-entity)
