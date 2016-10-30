@@ -43,7 +43,7 @@
     (doto (assoc ghost-ship
             :body (create-ghost-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :ghost-ship :ghost? true :render-layer 90
+            :id :ghost-ship :ghost? true :render-layer 90 :score 500
             :below? true :shift-position? false :capture-height (c/screen-to-world c/capture-height)
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
       (body-position! x y 0)
@@ -156,6 +156,7 @@
     (vector-2! dir-vec :set-length tractor-beam-speed)
     (cond (< l tractor-beam-speed)
           (do
+            (update! screen :can-attack? false)
             (add-timer! screen :start-towing 0)
             (body-position! entity captured-x captured-y 0)
             (create-ghost-entity! screen captured-x captured-y))
@@ -199,16 +200,20 @@
     ))
 
 (defn handle-ghost [screen entities ghost]
-  (let [master (first (filter #(:master? %) entities))
-        captured-x (:x master)
-        captured-y (:y master)
-        capture-height (:capture-height ghost)
-        shifting (and (:shift-position? ghost) (> capture-height (c/screen-to-world c/capture-height-shifted)))
-        start-shifting (and (:below? ghost) (not shifting) (= :drifting (:movement-state master)))
-        stop-shifting (and shifting (< capture-height (c/screen-to-world c/capture-height-shifted)))
-        new-ghost (cond start-shifting (assoc ghost :shift-position? true :render-layer 60 :below? false)
-                        shifting (assoc ghost :capture-height (- capture-height tractor-beam-speed))
-                        stop-shifting (assoc ghost :shif-position? false)
-                        :else ghost)]
-    (body-position! new-ghost captured-x (- captured-y (:capture-height new-ghost)) 0)
-    new-ghost))
+  (let [master (first (filter #(:master? %) entities))]
+    (if master
+      (let [captured-x (:x master)
+            captured-y (:y master)
+            capture-height (:capture-height ghost)
+            shifting (and (:shift-position? ghost) (> capture-height (c/screen-to-world c/capture-height-shifted)))
+            start-shifting (and (:below? ghost) (not shifting) (= :drifting (:movement-state master)))
+            stop-shifting (and shifting (< capture-height (c/screen-to-world c/capture-height-shifted)))
+            new-ghost (cond start-shifting (assoc ghost :shift-position? true :render-layer 60 :below? false)
+                            shifting (assoc ghost :capture-height (- capture-height tractor-beam-speed))
+                            stop-shifting (assoc ghost :shif-position? false)
+                            :else ghost)]
+        (body-position! new-ghost captured-x (- captured-y (:capture-height new-ghost)) 0)
+        new-ghost)
+      (do
+        ;(prn :handle-ghost :no-master)
+        ghost))))

@@ -37,9 +37,9 @@
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def dropping-speed (- (c/screen-to-world 0.7)))
-(def towing-speed (c/screen-to-world 0.9))
+(def towing-speed (c/screen-to-world 1.0))
 (def starting-angle 0)
-(def rotating-speed 5)
+(def rotating-speed 8)
 (def d-time (/ 1.0 60))
 (def bomb-y-min (/ (c/screen-to-world c/game-height) 4.0))
 (def default-ticks-first-bomb 30)
@@ -191,6 +191,8 @@
     (update! screen :p1-level-score (+ (:p1-level-score screen) (* (:score enemy) (:p1-bonus screen))))
     (if (some? spark-emitter-id)
       (spark/remove-spark-emitter spark-emitter-id))
+    (if (:master? enemy)
+      (prn :explode-enemy :master-destroyed))
     (if (= (:movement-state enemy) :beaming)
       (let [ship (first (filter #(:ship? %) entities))
             all-others (filter #(nil? (:ship? %)) entities)
@@ -252,9 +254,10 @@
                           drifters (shuffle (filter #(= (:movement-state %) :drifting) enemies))
                           non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
                           capturers (filter #(= (:movement-state %) :capturing) non-drifters)
+                          master (filter #(:master? %) enemies)
                           entity (first drifters)
                           attacker (cond entity
-                                         (if (and (:boss? entity) (empty? capturers))
+                                         (if (and (:boss? entity) (empty? capturers) (empty? master))
                                            (let [n-m-s :capturing]
                                              (assoc entity :movement-state n-m-s :current-time 0
                                                :spline (splines/calibrate-spline (assoc entity :movement-state n-m-s))))
