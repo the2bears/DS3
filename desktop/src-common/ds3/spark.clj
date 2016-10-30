@@ -40,6 +40,11 @@
   (do
     (reset! spark-textures (map (fn [c] (create-spark-texture (color c))) blues))))
 
+(defn reset-emitters []
+  (do
+    (reset! spark-emitters [])
+    (reset! removed-emitters {})))
+
 (defn create-spark-emitter
   ([{:keys [:x :y] :as enemy}]
    (create-spark-emitter enemy (c/rand-keyword)))

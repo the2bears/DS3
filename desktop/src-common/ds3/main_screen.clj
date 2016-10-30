@@ -177,7 +177,8 @@
            :wave-respawning? false
            :can-attack? false)
   (prn :on-new-game)
-  (remove #(:enemy? %) (conj entities (ship/create-ship-entity! screen))))
+  (spark/reset-emitters)
+  (remove #(or (:spark? %) (:enemy? %)) (conj entities (ship/create-ship-entity! screen))))
 
 (defn handle-all-entities [screen entities]
   (->> entities
