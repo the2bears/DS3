@@ -244,11 +244,14 @@
            (key-pressed? :x))
       (if-let [ship (first (filter #(:ship? %) entities))]
         (let [x (:x ship)
-              y (:y ship)]
+              y (:y ship)
+              has-doppel? (:has-doppel? ship)]
           ;(prn :x x :y y)
           (update! screen :fire-when-ready false)
           (add-timer! screen :refresh-shot 0.2)
-          (conj entities (bullet/create-bullet! screen x (+ 0.1 y))))
+          (cond-> entities
+                  true (conj (bullet/create-bullet! screen x (+ 0.1 y)))
+                  has-doppel? (conj (bullet/create-bullet! screen (+ x ship/ship-width) (+ 0.1 y)))))
         entities)
       :else entities
       )
