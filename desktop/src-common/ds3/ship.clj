@@ -15,6 +15,8 @@
 (def tractor-beam-speed (c/screen-to-world 0.75))
 (def drop-speed (c/screen-to-world 1.1))
 (def default-r2 (c/screen-to-world 1.0))
+(def ship-width (c/screen-to-world 12))
+(def ship-half-width (c/screen-to-world 6))
 
 (defn create-ship-entity!
   ([screen]
@@ -34,7 +36,7 @@
       (body-position! (cond (= label :ship?)
                             (c/screen-to-world (/ c/game-width 2))
                             :else
-                            (+ (c/screen-to-world 12) (:ship-x screen))) c/ship-y-default 0)
+                            (+ ship-width (:ship-x screen))) c/ship-y-default 0)
       (body! :set-linear-velocity 0 0)))))
 
 (defn- create-ship-body!
@@ -62,8 +64,8 @@
   (let [ship (assoc (first (filter #(:ship? %) entities)) :has-doppel? true)
         all-others (filter #(nil? (:ship? %)) entities)
         doppel (create-ship-entity! screen :doppel?)]
-    (body-position! ship (- (:x ship) (c/screen-to-world 6)) (:y ship) (:angle ship))
-    (body-position! doppel (+ (:x ship) (c/screen-to-world 6)) (:y ship) (:angle ship))
+    (body-position! ship (- (:x ship) ship-half-width) (:y ship) (:angle ship))
+    (body-position! doppel (+ (:x ship) ship-half-width) (:y ship) (:angle ship))
     (-> all-others
         (conj ship)
         (conj doppel))))
@@ -151,14 +153,14 @@
               :else entity)))
     entity))
 
-(defn- move [screen entities {:keys [:x :y :angle] :as entity} direction]
+(defn- move [screen entities {:keys [:x :y :angle :has-doppel?] :as entity} direction]
   (let [mv-fn (case direction
                 :right +
                 :left -
                 :straight (fn[x _] x))
         x (mv-fn x speed)
         x-anchored (cond (> x c/game-width-adj) c/game-width-adj
-                         (< x 0) 0
+                         (< x (if has-doppel? (- ship-width) 0)) (if has-doppel? (- ship-width) 0)
                          :else x)
         y-diff (- y c/ship-y-default)
         y-anchored (cond (> y-diff drop-speed) (- y drop-speed)
@@ -166,7 +168,7 @@
         doppel (first (filter #(:doppel? %) entities))]
     (body-position! entity x-anchored y-anchored angle)
     (if doppel
-      (body-position! doppel (+ x-anchored (c/screen-to-world 12)) y-anchored angle))
+      (body-position! doppel (+ x-anchored ship-width) y-anchored angle))
     (update! screen :ship-x x-anchored))
   entity)
 
