@@ -224,14 +224,18 @@
                                           %1)
                                        entities)))))
 
-(defn- convert-ghost [ghost master]
-  (assoc ghost :ghost? false :enemy? true
-    :drift-x-delta (:drift-x-delta master)
-    :drift-y-delta (:drift-y-delta master)
-    :row (:row master) :col (:col master) :home-x (:home-x master) :home-y (:home-y master)
-    :movement-state :returning :hp 1 :score 500
-    :ticks-to-bomb (rand-int default-ticks-first-bomb)
-    ))
+(defn- convert-ghost [ghost {:keys [:movement-state] :as master}]
+  (if (= :attacking movement-state)
+    (do
+      (prn :convert-ghost :attacking)
+      ghost)
+    (assoc ghost :ghost? false :enemy? true
+      :drift-x-delta (:drift-x-delta master)
+      :drift-y-delta (:drift-y-delta master)
+      :row (:row master) :col (:col master) :home-x (:home-x master) :home-y (:home-y master)
+      :movement-state :returning :hp 1 :score 500
+      :ticks-to-bomb (rand-int default-ticks-first-bomb)
+      )))
 
 (defn handle-mini-collision [mini other-entity screen entities]
   (cond (:bullet? other-entity)

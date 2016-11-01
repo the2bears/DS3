@@ -151,7 +151,11 @@
             (= (:key screen) (key-code :p))
             (do
               (update! screen :game-state :paused)
-              entities))
+              entities)
+            (= (:key screen) (key-code :d))
+            (do
+              (prn :on-key-up :doppel)
+              (ship/add-doppel! screen entities)))
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
             (on-new-game screen entities))
@@ -183,7 +187,7 @@
 (defn handle-all-entities [screen entities]
   (->> entities
        (map (fn [entity]
-              (cond (:ship? entity) (ship/move-player-tick screen entity)
+              (cond (:ship? entity) (ship/move-player-tick screen entities entity)
                     (:enemy? entity) (->> entity
                                           (enemy/move screen)
                                           (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy

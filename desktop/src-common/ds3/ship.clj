@@ -16,17 +16,26 @@
 (def drop-speed (c/screen-to-world 1.1))
 (def default-r2 (c/screen-to-world 1.0))
 
-(defn create-ship-entity! [screen]
+(defn create-ship-entity!
+  ([screen]
+   (create-ship-entity! screen :ship?))
+  ([screen label]
   (let [pixel-ship (create-pixel-ship-texture Integer/MAX_VALUE)];c/ghost-color)]
     (update! screen :ship-x (c/screen-to-world (/ c/game-width 2)))
     (doto (assoc pixel-ship
             :body (create-ship-body! screen)
             :width (c/screen-to-world 16) :height (c/screen-to-world 16)
-            :id :pixel-ship :ship? true :render-layer 90
+            :id :pixel-ship
+            label true
+            :render-layer 90
+            :has-doppel? false
             :captured? false
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
-      (body-position! (c/screen-to-world (/ c/game-width 2)) c/ship-y-default 0)
-      (body! :set-linear-velocity 0 0))))
+      (body-position! (cond (= label :ship?)
+                            (c/screen-to-world (/ c/game-width 2))
+                            :else
+                            (+ (c/screen-to-world 12) (:ship-x screen))) c/ship-y-default 0)
+      (body! :set-linear-velocity 0 0)))))
 
 (defn- create-ship-body!
   [screen]
@@ -48,6 +57,16 @@
             :translate-x (- (c/screen-to-world c/ship-mp-xoffset)) :translate-y (- (c/screen-to-world c/ship-mp-yoffset)))
       (body-position! x y 0)
       (body! :set-linear-velocity 0 0))))
+
+(defn add-doppel! [screen entities]
+  (let [ship (assoc (first (filter #(:ship? %) entities)) :has-doppel? true)
+        all-others (filter #(nil? (:ship? %)) entities)
+        doppel (create-ship-entity! screen :doppel?)]
+    (body-position! ship (- (:x ship) (c/screen-to-world 6)) (:y ship) (:angle ship))
+    (body-position! doppel (+ (:x ship) (c/screen-to-world 6)) (:y ship) (:angle ship))
+    (-> all-others
+        (conj ship)
+        (conj doppel))))
 
 (defn- create-ghost-body!
   [screen]
@@ -116,7 +135,7 @@
 
        ))))
 
-(defn move-player-tick [screen {:keys [:x :y :angle] :as entity}]
+(defn move-player-tick [screen entities {:keys [:x :y :angle] :as entity}]
   (if (:ship? entity)
     (let [y-diff (- y c/ship-y-default)]
       (cond (:captured? entity)
@@ -124,15 +143,15 @@
             :else
             (cond
               (key-pressed? :dpad-right)
-              (move screen entity :right)
+              (move screen entities entity :right)
               (key-pressed? :dpad-left)
-              (move screen entity :left)
+              (move screen entities entity :left)
               (> y-diff 0)
-              (move screen entity :straight)
+              (move screen entities entity :straight)
               :else entity)))
     entity))
 
-(defn- move [screen {:keys [:x :y :angle] :as entity} direction]
+(defn- move [screen entities {:keys [:x :y :angle] :as entity} direction]
   (let [mv-fn (case direction
                 :right +
                 :left -
@@ -143,8 +162,11 @@
                          :else x)
         y-diff (- y c/ship-y-default)
         y-anchored (cond (> y-diff drop-speed) (- y drop-speed)
-                         :else c/ship-y-default)]
+                         :else c/ship-y-default)
+        doppel (first (filter #(:doppel? %) entities))]
     (body-position! entity x-anchored y-anchored angle)
+    (if doppel
+      (body-position! doppel (+ x-anchored (c/screen-to-world 12)) y-anchored angle))
     (update! screen :ship-x x-anchored))
   entity)
 
