@@ -98,7 +98,9 @@
         (:enemy? entity) (enemy/handle-collision entity entity2 screen entities)
         (:enemy? entity2) (enemy/handle-collision entity2 entity screen entities)
         (:ship? entity) (ship/handle-collision entity entity2 screen entities)
-        (:ship? entity2) (ship/handle-collision entity2 entity screen entities)
+        ;(:ship? entity2) (ship/handle-collision entity2 entity screen entities)
+        (:doppel? entity) (ship/handle-doppel-collision entity entity2 screen entities)
+        (:doppel? entity2) (ship/handle-doppel-collision entity2 entity screen entities)
         (:mini? entity) (enemy/handle-mini-collision entity entity2 screen entities)
         (:mini? entity2) (enemy/handle-mini-collision entity2 entity screen entities)
         (:bullet? entity) (bullet/handle-collision entity entity2 screen entities)
@@ -132,7 +134,7 @@
       (let [to-do ((:id screen) screen)
             new-entity (apply (:f to-do) (:args to-do))]
         (update! screen (:id screen) nil)
-        (conj entities new-entity))))
+        (conj (remove #(and (:ship? new-entity) (:ship? %)) entities) new-entity))))
 
   :on-pause
   (fn [{:keys [game-state] :as screen} entities]

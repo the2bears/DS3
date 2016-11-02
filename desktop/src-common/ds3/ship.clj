@@ -9,7 +9,7 @@
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
 
-(declare create-ghost-body! create-pixel-ship-texture create-ship-body! draw-rect-pixelmap hsv-to-rgb  move play-clj-color update-captured)
+(declare collide-with-doppel? create-ghost-body! create-pixel-ship-texture create-ship-body! draw-rect-pixelmap hsv-to-rgb  move play-clj-color swap-ship-doppel update-captured)
 
 (def speed (c/screen-to-world 1.5))
 (def tractor-beam-speed (c/screen-to-world 0.75))
@@ -101,20 +101,20 @@
 
 (def p-per-r 1)
 
-(defn draw-rect-pixelmap [pix-map {:keys [x y color]}]
+(defn- draw-rect-pixelmap [pix-map {:keys [x y color]}]
   (let [c (play-clj-color color)]
     (doto pix-map
       (pixmap! :set-color c)
       (pixmap! :fill-rectangle x y p-per-r p-per-r))))
 
-(defn play-clj-color
+(defn- play-clj-color
   ([{:keys [h s v]}]
    (let [[r g b a] (hsv-to-rgb [h s v 1])]
      (play-clj-color r g b a)))
   ([r g b a]
    (color r g b a)))
 
-(defn hsv-to-rgb
+(defn- hsv-to-rgb
   ;Convert hsv to rgb
   ;Inputs are floats 0<i<1
   ([[hue saturation value alpha]]
@@ -189,39 +189,95 @@
             (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
             entity))))
 
-(defn handle-collision [ship other-entity screen entities]
-  (cond (:bomb? other-entity)
-        (let [lives (- (:p1-lives screen) 1)]
-          (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
-          (remove #(or (= other-entity %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
-        (:mini? other-entity)
-        (let [lives (- (:p1-lives screen) 1)]
-          (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
-          (remove #(or (= other-entity %) (= ship %)) (conj entities
-                                                            (exp/create-ship-explosion (:x ship) (:y ship))
-                                                            (exp/create-explosion (:x other-entity) (:y other-entity)))))
-        :else entities))
+(defn handle-collision [{:keys [:ship? :has-doppel?] :as ship} other-entity screen entities]
+  (let [doppel (first (filter #(:doppel? %) entities))]
+    (prn :handle-collision :has-doppel? has-doppel?)
+    (cond (:bomb? other-entity)
+          (do
+            (if has-doppel?
+              (let [next-keyword (c/rand-keyword)]
+                (update! screen next-keyword {:f swap-ship-doppel :args [ship doppel]})
+                (add-timer! screen next-keyword 0.0))
+              (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
+            (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
+          (:mini? other-entity)
+          (do
+            (if has-doppel?
+              (let [next-keyword (c/rand-keyword)]
+                (update! screen next-keyword {:f swap-ship-doppel :args [ship doppel]})
+                (add-timer! screen next-keyword 0.0))
+              (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
+            (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities
+                                                                           (exp/create-ship-explosion (:x ship) (:y ship))
+                                                                           (exp/create-explosion (:x other-entity) (:y other-entity)))))
+          :else entities)))
+
+(defn handle-doppel-collision [doppel other-entity screen entities]
+  (let [ship (first (filter #(:ship? %) entities))]
+    (cond (:bomb? other-entity)
+          (conj (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities
+                                                                               (exp/create-ship-explosion (:x doppel) (:y doppel))))
+                (assoc ship :has-doppel? false))
+          (:mini? other-entity)
+          (conj (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities
+                                                                               (exp/create-ship-explosion (:x doppel) (:y doppel))
+                                                                               (exp/create-explosion (:x other-entity) (:y other-entity))))
+                (assoc ship :has-doppel? false))
+          :else entities)))
 
 (defn collide-with-enemy? [screen entities]
   (if-let [ship (first (filter #(:ship? %) entities))]
     (let [enemies (filter #(:enemy? %) entities)
           ship-pos (body! ship :get-position)
-          collide? (fn [ship enemy]
+          collide? (fn [enemy];[ship enemy]
                      (let [enemy-pos (body! enemy :get-position)
                            distance (vector-2! ship-pos :dst2 enemy-pos)]
                        (< distance default-r2)))
-          dead-enemies (filter #(collide? ship %) enemies)
-          collided? (> (count dead-enemies) 0)]
+          dead-enemies (filter #(collide? %) enemies)
+          collided? (> (count dead-enemies) 0)
+          doppel (first (filter #(:doppel? %) entities))
+          has-doppel? (:has-doppel? ship)]
       (cond collided? (let [enemy (first dead-enemies)]
                         (if (some? (:spark-emitter enemy))
                           (spark/remove-spark-emitter (:spark-emitter enemy)))
-                        (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1)
-                        (remove #(or (= enemy %) (= ship %)) (conj entities
-                                                                   (exp/create-ship-explosion (:x ship) (:y ship))
-                                                                   (exp/create-explosion (:x enemy) (:y enemy)))))
+                        (if has-doppel?
+                          (let [next-keyword (c/rand-keyword)]
+                            (update! screen next-keyword {:f swap-ship-doppel :args [ship doppel]})
+                            (add-timer! screen next-keyword 0.0))
+                          (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
+                        (remove #(or (= enemy %) (= doppel %) (= ship %)) (conj entities
+                                                                                (exp/create-ship-explosion (:x ship) (:y ship))
+                                                                                (exp/create-explosion (:x enemy) (:y enemy)))))
+            :else (collide-with-doppel? screen entities)))
+    entities))
+
+(defn- collide-with-doppel? [screen entities]
+  (if-let [doppel (first (filter #(:doppel? %) entities))]
+    (let [enemies (filter #(:enemy? %) entities)
+          ship-pos (body! doppel :get-position)
+          collide? (fn [doppel enemy]
+                     (let [enemy-pos (body! enemy :get-position)
+                           distance (vector-2! ship-pos :dst2 enemy-pos)]
+                       (< distance default-r2)))
+          dead-enemies (filter #(collide? doppel %) enemies)
+          collided? (> (count dead-enemies) 0)]
+      (cond collided? (let [enemy (first dead-enemies)
+                            ship (first (filter #(:ship? %) entities))]
+                        (prn :collide-with-doppel?)
+                        (if (some? (:spark-emitter enemy))
+                          (spark/remove-spark-emitter (:spark-emitter enemy)))
+                        (conj (remove #(or (= enemy %) (= doppel %) (= ship %)) (conj entities
+                                                                                      (exp/create-ship-explosion (:x doppel) (:y doppel))
+                                                                                      (exp/create-explosion (:x enemy) (:y enemy))))
+                              (assoc ship :has-doppel? false)))
             :else entities))
-    entities
-    ))
+    entities))
+
+(defn swap-ship-doppel [ship doppel]
+  (do
+    (body-position! ship (:x doppel) (:y doppel) (:angle doppel))
+    (clojure.pprint/pprint (assoc ship :has-doppel? false))
+    (assoc ship :has-doppel? false)))
 
 (defn handle-ghost [screen entities ghost]
   (let [master (first (filter #(:master? %) entities))]
