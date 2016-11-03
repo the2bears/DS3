@@ -241,13 +241,12 @@
                         (if (some? (:spark-emitter enemy))
                           (spark/remove-spark-emitter (:spark-emitter enemy)))
                         (if has-doppel?
-                          (let [next-keyword (c/rand-keyword)]
-                            (update! screen next-keyword {:f swap-ship-doppel :args [ship doppel]})
-                            (add-timer! screen next-keyword 0.0))
+                          (body-position! ship (:x doppel) (:y doppel) (:angle doppel))
                           (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
-                        (remove #(or (= enemy %) (= doppel %) (= ship %)) (conj entities
-                                                                                (exp/create-ship-explosion (:x ship) (:y ship))
-                                                                                (exp/create-explosion (:x enemy) (:y enemy)))))
+                        (cond-> (remove #(or (= enemy %) (= doppel %) (= ship %)) entities)
+                                true (conj (exp/create-ship-explosion (:x ship) (:y ship)))
+                                true (conj (exp/create-explosion (:x enemy) (:y enemy)))
+                                has-doppel? (conj (assoc ship :has-doppel? false))))
             :else (collide-with-doppel? screen entities)))
     entities))
 
@@ -266,10 +265,10 @@
                         (prn :collide-with-doppel?)
                         (if (some? (:spark-emitter enemy))
                           (spark/remove-spark-emitter (:spark-emitter enemy)))
-                        (conj (remove #(or (= enemy %) (= doppel %) (= ship %)) (conj entities
-                                                                                      (exp/create-ship-explosion (:x doppel) (:y doppel))
-                                                                                      (exp/create-explosion (:x enemy) (:y enemy))))
-                              (assoc ship :has-doppel? false)))
+                        (-> (remove #(or (= enemy %) (= doppel %) (= ship %)) entities)
+                            (conj (exp/create-ship-explosion (:x doppel) (:y doppel)))
+                            (conj (exp/create-explosion (:x enemy) (:y enemy)))
+                            (conj (assoc ship :has-doppel? false))))
             :else entities))
     entities))
 
