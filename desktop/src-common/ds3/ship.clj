@@ -17,6 +17,8 @@
 (def default-r2 (c/screen-to-world 1.0))
 (def ship-width (c/screen-to-world 12))
 (def ship-half-width (c/screen-to-world 6))
+(def ship-b2d-width 3)
+(def ship-b2d-height 2)
 
 (defn create-ship-entity!
   ([screen]
@@ -42,7 +44,7 @@
 (defn- create-ship-body!
   [screen]
   (let [body (add-body! screen (body-def :dynamic))
-        ship-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
+        ship-shape (polygon-shape :set-as-box (c/screen-to-world ship-b2d-width) (c/screen-to-world ship-b2d-height) (vector-2 0 0) 0)]
     (->> ship-shape
          (fixture-def :density 1 :friction 0 :restitution 1 :shape)
          (body! body :create-fixture))
@@ -73,7 +75,7 @@
 (defn- create-ghost-body!
   [screen]
   (let [body (add-body! screen (body-def :dynamic))
-        ship-shape (polygon-shape :set-as-box (c/screen-to-world 2) (c/screen-to-world 2) (vector-2 0 0) 0)]
+        ship-shape (polygon-shape :set-as-box (c/screen-to-world ship-b2d-width) (c/screen-to-world ship-b2d-height) (vector-2 0 0) 0)]
     (->> ship-shape
          (fixture-def :density 1 :friction 0 :restitution 1 :shape)
          (body! body :create-fixture))

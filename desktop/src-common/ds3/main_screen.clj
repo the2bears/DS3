@@ -184,7 +184,7 @@
            :can-attack? false)
   (prn :on-new-game)
   (spark/reset-emitters)
-  (remove #(or (:spark? %) (:enemy? %)) (conj entities (ship/create-ship-entity! screen))))
+  (remove #(or (:spark? %) (:enemy? %) (:ghost? %)) (conj entities (ship/create-ship-entity! screen))))
 
 (defn handle-all-entities [screen entities]
   (->> entities
