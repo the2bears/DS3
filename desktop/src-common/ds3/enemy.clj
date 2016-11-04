@@ -275,9 +275,10 @@
                           non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
                           capturers (filter #(= (:movement-state %) :capturing) non-drifters)
                           master (filter #(:master? %) enemies)
+                          ghost (filter #(:ghost? %) non-enemies)
                           entity (first drifters)
                           attacker (cond entity
-                                         (if (and (:boss? entity) (empty? capturers) (empty? master))
+                                         (if (and (:boss? entity) (empty? capturers) (empty? master) (empty? ghost))
                                            (let [n-m-s :capturing]
                                              (assoc entity :movement-state n-m-s :current-time 0
                                                :spline (splines/calibrate-spline (assoc entity :movement-state n-m-s))))
@@ -381,4 +382,4 @@
                                         :else (:movement-state entity)))))
 
 (defn- update-towing [screen entity]
-  (update-returning entity screen towing-speed))
+  (update-returning screen entity towing-speed))
