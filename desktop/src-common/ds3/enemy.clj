@@ -122,26 +122,26 @@
         (add-timer! screen next-keyword (* 0.15 xx)))))
   )
 
-(defn move [screen entity]
+(defn move [screen entities entity]
   (let [ms (:movement-state entity)
-        entity (update-home entity screen)];(update-emitter entity screen)
+        entity (update-home screen entity)];(update-emitter entity screen)
     (update-emitter screen entity)
     (cond (= :drifting ms)
-          (update-drift entity screen)
+          (update-drift screen entity)
           (= :attacking ms)
-          (update-from-spline entity screen)
+          (update-from-spline screen entity)
           (= :capturing ms)
-          (update-from-spline entity screen)
+          (update-from-spline screen entity)
           (= :returning ms)
-          (update-returning entity screen)
+          (update-returning screen entity)
           (= :dropping ms)
-          (update-dropping entity screen)
+          (update-dropping screen entity)
           (= :beaming ms)
-          (update-beaming entity screen)
+          (update-beaming screen entities entity)
           (= :turning ms)
-          (update-turning entity screen)
+          (update-turning screen entity)
           (= :towing ms)
-          (update-towing entity screen)
+          (update-towing screen entity)
           :else
           entity)))
 
@@ -293,7 +293,7 @@
                                       (conj non-enemies)))))
           :else entities)))
 
-(defn- update-home [entity screen]
+(defn- update-home [screen entity]
   (let [on-left (< (:home-x entity) c/half-game-width-world)
         outward  (:formation-expand? screen)
         b (cond on-left outward
@@ -304,11 +304,11 @@
                          :else +)]
     (assoc entity :home-x (delta-x-fn (:home-x entity) (:drift-x-delta entity)) :home-y (delta-y-fn (:home-y entity) (:drift-y-delta entity)))))
 
-(defn- update-drift [entity screen]
+(defn- update-drift [screen entity]
   (body-position! entity (:home-x entity) (:home-y entity) (:angle entity))
   entity)
 
-(defn- update-from-spline [entity screen]
+(defn- update-from-spline [screen entity]
   (let [current-time (if (> (:current-time entity) 1)
                        (- (:current-time entity) 1)
                        (:current-time entity))
@@ -337,9 +337,9 @@
           )))
 
 (defn- update-returning
-  ([entity screen]
-   (update-returning entity screen returning-speed))
-  ([{:keys [:home-x :home-y] :as entity} screen speed]
+  ([screen entity]
+   (update-returning screen entity returning-speed))
+  ([screen {:keys [:home-x :home-y] :as entity} speed]
    (let [cur-pos (vector-2 (:x entity) (:y entity))
          target-pos (vector-2 home-x home-y)
          dir-vec (vector-2! target-pos :sub cur-pos)
@@ -354,7 +354,7 @@
              (body-position! entity (+ (:x entity) (x dir-vec)) (+ (:y entity) (y dir-vec)) 0)
              entity)))))
 
-(defn- update-dropping [{:keys [:x :y] :as entity} screen]
+(defn- update-dropping [screen {:keys [:x :y] :as entity}]
   (cond (> y (- (c/screen-to-world 10)))
         (do
           (body-position! entity x (+ y dropping-speed) 180)
@@ -364,13 +364,14 @@
           (body-position! entity (:home-x entity) (c/screen-to-world c/game-height) 0)
           (assoc entity :movement-state (state-machine (:movement-state entity))))))
 
-(defn- update-beaming [{:keys [:x :y :beaming-ticks] :as entity} screen]
-  (cond (> beaming-ticks 0)
-        (assoc entity :beaming-ticks (- beaming-ticks 1))
-        :else
-        (assoc entity :movement-state (state-machine (:movement-state entity)))))
+(defn- update-beaming [screen entities {:keys [:x :y :beaming-ticks] :as entity}]
+  (let [ship (first (filter #(:ship? %) entities))]
+    (cond (or (> beaming-ticks 0) (:captured? ship))
+          (assoc entity :beaming-ticks (- beaming-ticks 1))
+          :else
+          (assoc entity :movement-state (state-machine (:movement-state entity))))))
 
-(defn- update-turning [{:keys [:x :y :angle] :as entity} screen]
+(defn- update-turning [screen {:keys [:x :y :angle] :as entity}]
   (let [angle-diff (- angle starting-angle)
         done-turning (< angle-diff rotating-speed)
         new-angle (cond done-turning starting-angle
@@ -379,5 +380,5 @@
     (assoc entity :movement-state (cond done-turning (state-machine (:movement-state entity))
                                         :else (:movement-state entity)))))
 
-(defn- update-towing [entity screen]
+(defn- update-towing [screen entity]
   (update-returning entity screen towing-speed))

@@ -191,13 +191,13 @@
        (map (fn [entity]
               (cond (:ship? entity) (ship/move-player-tick screen entities entity)
                     (:enemy? entity) (->> entity
-                                          (enemy/move screen)
+                                          (enemy/move screen entities)
                                           (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:bomb? entity) (bomb/animate-bomb screen entity)
                     (:star? entity) (space/move-star screen entity)
                     (:spark? entity) (spark/update-spark screen entity)
-                    (:beam? entity) (beam/handle-beam entity)
+                    (:beam? entity) (beam/handle-beam entities entity)
                     (:ghost? entity) (ship/handle-ghost screen entities entity)
                     :else entity)))
        (ship/collide-with-enemy? screen)

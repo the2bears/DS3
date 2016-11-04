@@ -39,9 +39,10 @@
          (body! body :create-fixture ))
     body))
 
-(defn handle-beam [{:keys [:beaming-ticks] :as entity}]
-  (let [new-ticks (- beaming-ticks 1)]
-    (if (= 0 beaming-ticks)
+(defn handle-beam [entities {:keys [:beaming-ticks] :as entity}]
+  (let [new-ticks (- beaming-ticks 1)
+        ship (first (filter #(:ship? %) entities))]
+    (if (and (< beaming-ticks 0) (not (:captured? ship)))
       nil
       (do
         (body! entity :apply-force-to-center (vector-2 0 0) true)
