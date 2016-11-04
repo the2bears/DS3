@@ -276,9 +276,10 @@
                           capturers (filter #(= (:movement-state %) :capturing) non-drifters)
                           master (filter #(:master? %) enemies)
                           ghost (filter #(:ghost? %) non-enemies)
+                          doppel (filter #(:doppel? %) non-enemies)
                           entity (first drifters)
                           attacker (cond entity
-                                         (if (and (:boss? entity) (empty? capturers) (empty? master) (empty? ghost))
+                                         (if (and (:boss? entity) (empty? capturers) (empty? master) (empty? ghost) (empty? doppel))
                                            (let [n-m-s :capturing]
                                              (assoc entity :movement-state n-m-s :current-time 0
                                                :spline (splines/calibrate-spline (assoc entity :movement-state n-m-s))))
