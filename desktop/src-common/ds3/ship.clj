@@ -66,6 +66,7 @@
   (let [ship (assoc (first (filter #(:ship? %) entities)) :has-doppel? true)
         all-others (filter #(nil? (:ship? %)) entities)
         doppel (create-ship-entity! screen :doppel?)]
+    (update! screen :p1-bonus (+ 1 (:p1-bonus screen)) :p1-rank (+ 1 (:p1-rank screen)))
     (body-position! ship (- (:x ship) ship-half-width) (:y ship) (:angle ship))
     (body-position! doppel (+ (:x ship) ship-half-width) (:y ship) (:angle ship))
     (-> all-others
@@ -77,7 +78,7 @@
   (let [body (add-body! screen (body-def :dynamic))
         ship-shape (polygon-shape :set-as-box (c/screen-to-world ship-b2d-width) (c/screen-to-world ship-b2d-height) (vector-2 0 0) 0)]
     (->> ship-shape
-         (fixture-def :density 1 :friction 0 :restitution 1 :shape)
+         (fixture-def :density 1 :friction 0 :restitution 1 :is-sensor true :shape)
          (body! body :create-fixture))
     (.dispose ship-shape)
     body))
@@ -212,6 +213,11 @@
             (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities
                                                                            (exp/create-ship-explosion (:x ship) (:y ship))
                                                                            (exp/create-explosion (:x other-entity) (:y other-entity)))))
+          (:ghost? other-entity)
+          (let [next-keyword (c/rand-keyword)]
+            (update! screen next-keyword {:f add-doppel! :args [screen (remove #(= other-entity %) entities)]})
+            (add-timer! screen next-keyword 0)
+            (remove #(= other-entity %) entities))
           :else entities)))
 
 (defn handle-doppel-collision [doppel other-entity screen entities]
@@ -295,6 +301,11 @@
                             :else ghost)]
         (body-position! new-ghost captured-x (- captured-y (:capture-height new-ghost)) 0)
         new-ghost)
-      (do
-        ;(prn :handle-ghost :no-master)
-        ghost))))
+        ghost)))
+
+(defn handle-ghost-collision [ghost other-entity screen entities]
+  (cond (:oob? other-entity)
+        (do
+          (prn :handle-ghost-collision)
+          (remove #(= ghost %) entities))
+        :else entities))

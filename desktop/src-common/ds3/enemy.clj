@@ -37,6 +37,7 @@
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def dropping-speed (- (c/screen-to-world 0.7)))
+(def ghost-dropping-speed (c/screen-to-world -60.0))
 (def towing-speed (c/screen-to-world 1.0))
 (def starting-angle 0)
 (def rotating-speed 8)
@@ -202,12 +203,11 @@
           (:master? enemy)
           (let [ghost (first (filter #(:ghost? %) entities))
                 converted-ghost (convert-ghost ghost enemy)]
-            (remove #(or (= enemy %)
-                         (= other-entity %)
-                         (= ghost %))
-                    (-> entities
-                        (conj (exp/create-explosion (:x enemy) (:y enemy)))
-                        (conj converted-ghost))))
+            (-> (remove #(or (= enemy %)
+                             (= other-entity %)
+                             (= ghost %)) entities)
+                (conj (exp/create-explosion (:x enemy) (:y enemy)))
+                (conj converted-ghost)))
           :else
           (remove #(or (= enemy %)
                        (= other-entity %))
@@ -228,6 +228,8 @@
   (if (= :attacking movement-state)
     (do
       (prn :convert-ghost :attacking)
+      ;(body! entity :apply-force-to-center (vector-2 0 0) true)
+      (body! ghost :set-linear-velocity 0 ghost-dropping-speed)
       ghost)
     (assoc ghost :ghost? false :enemy? true
       :drift-x-delta (:drift-x-delta master)
