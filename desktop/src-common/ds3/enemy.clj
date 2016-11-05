@@ -214,21 +214,17 @@
                   (conj entities (exp/create-explosion (:x enemy) (:y enemy)))))))
 
 (defn- spark-enemy [{:keys [:hp] :as enemy} other-entity screen entities]
-  (do
-    ;(prn :spark-enemy)
-    (let [spark-emitter-id (spark/create-spark-emitter enemy)]
-      (sound "explosion.ogg" :play 0.35)
-      (remove #(= other-entity %) (map #(if
-                                          (= enemy %1)
-                                          (assoc %1 :hp (- hp 1) :spark-emitter spark-emitter-id)
-                                          %1)
-                                       entities)))))
+  (let [spark-emitter-id (spark/create-spark-emitter enemy)]
+    (sound "explosion.ogg" :play 0.35)
+    (remove #(= other-entity %) (map #(if
+                                        (= enemy %1)
+                                        (assoc %1 :hp (- hp 1) :spark-emitter spark-emitter-id)
+                                        %1)
+                                     entities))))
 
 (defn- convert-ghost [ghost {:keys [:movement-state] :as master}]
   (if (= :attacking movement-state)
     (do
-      (prn :convert-ghost :attacking)
-      ;(body! entity :apply-force-to-center (vector-2 0 0) true)
       (body! ghost :set-linear-velocity 0 ghost-dropping-speed)
       ghost)
     (assoc ghost :ghost? false :enemy? true
@@ -277,8 +273,8 @@
                           non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
                           capturers (filter #(= (:movement-state %) :capturing) non-drifters)
                           master (filter #(:master? %) enemies)
-                          ghost (filter #(:ghost? %) non-enemies)
-                          doppel (filter #(:doppel? %) non-enemies)
+                          ghost (filter #(:ghost? %) entities)
+                          doppel (filter #(:doppel? %) entities)
                           entity (first drifters)
                           attacker (cond entity
                                          (if (and (:boss? entity) (empty? capturers) (empty? master) (empty? ghost) (empty? doppel))

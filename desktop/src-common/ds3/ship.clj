@@ -69,9 +69,7 @@
     (update! screen :p1-bonus (+ 1 (:p1-bonus screen)) :p1-rank (+ 1 (:p1-rank screen)))
     (body-position! ship (- (:x ship) ship-half-width) (:y ship) (:angle ship))
     (body-position! doppel (+ (:x ship) ship-half-width) (:y ship) (:angle ship))
-    (-> all-others
-        (conj ship)
-        (conj doppel))))
+    [ship doppel]))
 
 (defn- create-ghost-body!
   [screen]
