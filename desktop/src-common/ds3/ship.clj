@@ -9,7 +9,7 @@
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [vector-2 vector-2!]]))
 
-(declare collide-with-doppel? create-ghost-body! create-pixel-ship-texture create-ship-body! draw-rect-pixelmap hsv-to-rgb  move play-clj-color swap-ship-doppel update-captured)
+(declare collide-with-doppel? convert-ghost create-ghost-body! create-pixel-ship-texture create-ship-body! draw-rect-pixelmap hsv-to-rgb  move play-clj-color swap-ship-doppel update-captured)
 
 (def speed (c/screen-to-world 1.5))
 (def tractor-beam-speed (c/screen-to-world 0.75))
@@ -242,15 +242,18 @@
           collided? (> (count dead-enemies) 0)
           doppel (first (filter #(:doppel? %) entities))
           has-doppel? (:has-doppel? ship)]
-      (cond collided? (let [enemy (first dead-enemies)]
+      (cond collided? (let [enemy (first dead-enemies)
+                            master? (:master? enemy)
+                            ghost (first (filter #(:ghost? %) entities))]
                         (if (some? (:spark-emitter enemy))
                           (spark/remove-spark-emitter (:spark-emitter enemy)))
                         (if has-doppel?
                           (body-position! ship (:x doppel) (:y doppel) (:angle doppel))
                           (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
-                        (cond-> (remove #(or (= enemy %) (= doppel %) (= ship %)) entities)
+                        (cond-> (remove #(or (= enemy %) (= doppel %) (= ship %) (= ghost %)) entities)
                                 true (conj (exp/create-ship-explosion (:x ship) (:y ship)))
                                 true (conj (exp/create-explosion (:x enemy) (:y enemy)))
+                                master? (conj (convert-ghost ghost enemy))
                                 has-doppel? (conj (assoc ship :has-doppel? false))))
             :else (collide-with-doppel? screen entities)))
     entities))
@@ -275,6 +278,12 @@
                             (conj (assoc ship :has-doppel? false))))
             :else entities))
     entities))
+
+(defn convert-ghost [ghost {:keys [:movement-state] :as master}]
+  (if (= :attacking movement-state)
+    (do
+      (body! ghost :set-linear-velocity 0 c/ghost-dropping-speed)
+      ghost)))
 
 (defn swap-ship-doppel [ship doppel]
   (do

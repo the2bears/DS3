@@ -37,7 +37,6 @@
 (def speed (c/screen-to-world 12))
 (def returning-speed (c/screen-to-world 0.6))
 (def dropping-speed (- (c/screen-to-world 0.7)))
-(def ghost-dropping-speed (c/screen-to-world -60.0))
 (def towing-speed (c/screen-to-world 1.0))
 (def starting-angle 0)
 (def rotating-speed 8)
@@ -225,7 +224,7 @@
 (defn- convert-ghost [ghost {:keys [:movement-state] :as master}]
   (if (= :attacking movement-state)
     (do
-      (body! ghost :set-linear-velocity 0 ghost-dropping-speed)
+      (body! ghost :set-linear-velocity 0 c/ghost-dropping-speed)
       ghost)
     (assoc ghost :ghost? false :enemy? true
       :drift-x-delta (:drift-x-delta master)

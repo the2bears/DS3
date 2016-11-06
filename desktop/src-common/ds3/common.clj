@@ -62,6 +62,8 @@
 
 (def ^:const beaming-ticks 180)
 
+(def ^:const ghost-dropping-speed (screen-to-world -60.0))
+
 (def ghost-color (assoc bollinger/color-scheme :sat-mid 0.12 :sat-delta 0.05))
 
 (defn distance-from-center [n]
