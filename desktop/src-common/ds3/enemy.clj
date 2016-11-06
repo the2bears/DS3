@@ -272,12 +272,13 @@
                           drifters (shuffle (filter #(= (:movement-state %) :drifting) enemies))
                           non-drifters (filter #(not= (:movement-state %) :drifting) enemies)
                           capturers (filter #(= (:movement-state %) :capturing) non-drifters)
+                          beamers (filter #(= (:movement-state %) :beaming) non-drifters)
                           master (filter #(:master? %) enemies)
                           ghost (filter #(:ghost? %) entities)
                           doppel (filter #(:doppel? %) entities)
                           entity (first drifters)
                           attacker (cond entity
-                                         (if (and (:boss? entity) (empty? capturers) (empty? master) (empty? ghost) (empty? doppel))
+                                         (if (and (:boss? entity) (empty? capturers) (empty? beamers) (empty? master) (empty? ghost) (empty? doppel))
                                            (let [n-m-s :capturing]
                                              (assoc entity :movement-state n-m-s :current-time 0
                                                :spline (splines/calibrate-spline (assoc entity :movement-state n-m-s))))

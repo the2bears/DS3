@@ -192,7 +192,6 @@
 
 (defn handle-collision [{:keys [:ship? :has-doppel?] :as ship} other-entity screen entities]
   (let [doppel (first (filter #(:doppel? %) entities))]
-    (prn :handle-collision :has-doppel? has-doppel?)
     (cond (:bomb? other-entity)
           (do
             (if has-doppel?
@@ -268,7 +267,6 @@
           collided? (> (count dead-enemies) 0)]
       (cond collided? (let [enemy (first dead-enemies)
                             ship (first (filter #(:ship? %) entities))]
-                        (prn :collide-with-doppel?)
                         (if (some? (:spark-emitter enemy))
                           (spark/remove-spark-emitter (:spark-emitter enemy)))
                         (-> (remove #(or (= enemy %) (= doppel %) (= ship %)) entities)
@@ -303,7 +301,5 @@
 
 (defn handle-ghost-collision [ghost other-entity screen entities]
   (cond (:oob? other-entity)
-        (do
-          (prn :handle-ghost-collision)
-          (remove #(= ghost %) entities))
+        (remove #(= ghost %) entities)
         :else entities))

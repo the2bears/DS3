@@ -119,7 +119,6 @@
                       entities)
       :spawn-wave (let [wave (:wave screen)
                         rank (if (> wave 0) (+ (:p1-rank screen) 1) (:p1-rank screen))]
-                    (prn :spawn-wave :p1-rank rank)
                     (update! screen :wave-respawning? false :formation-expand? false :ticks 0 :can-attack? true :p1-rank rank :wave (+ wave 1))
                     (conj entities (enemy/create-enemies screen)))
       :post-game-over (do
@@ -184,7 +183,6 @@
            :wave 0
            :wave-respawning? false
            :can-attack? false)
-  (prn :on-new-game)
   (spark/reset-emitters)
   (remove #(or (:spark? %) (:enemy? %) (:ghost? %)) (conj entities (ship/create-ship-entity! screen))))
 
