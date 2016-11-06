@@ -48,6 +48,9 @@
 (def ticks-next-bomb-max-delta 60)
 (def large-size (c/screen-to-world 16))
 (def mini-size (c/screen-to-world 10))
+(def mini-ticks-per 3)
+(def mini-wiggle-angles [180 175 170 165 170 175 180 185 190 195 190 185])
+
 
 (defn- create-enemy-entity! [screen ship-texture col]
   (let [pixel-ship (texture ship-texture)]
@@ -72,7 +75,8 @@
                     :id :mini-enemy :mini? true :render-layer 70 :score 200
                     :movement-state :falling
                     :bonus-group bonus-group
-                    :ticks-to-bomb (rand-int default-ticks-first-bomb))]
+                    :ticks-to-bomb (rand-int default-ticks-first-bomb)
+                    :ticks-to-wiggle 0)]
     (doto mini-ship
       (body! :set-linear-velocity 0 (c/screen-to-world -65.0))
       (body-position! x y 180.0))
@@ -382,3 +386,7 @@
 
 (defn- update-towing [screen entity]
   (update-returning screen entity towing-speed))
+
+(defn handle-mini [{:keys [:ticks-to-wiggle] :as entity}]
+  (let [mini-nth (mod (quot ticks-to-wiggle mini-ticks-per) (count mini-wiggle-angles))]
+    (assoc entity :ticks-to-wiggle (inc ticks-to-wiggle) :angle (nth mini-wiggle-angles mini-nth))))

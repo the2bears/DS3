@@ -189,6 +189,7 @@
                     (:enemy? entity) (->> entity
                                           (enemy/move screen entities)
                                           (enemy/drop-bomb screen));thread this last, as it might return a bomb along with the enemy
+                    (:mini? entity) (enemy/handle-mini entity)
                     (:explosion? entity) (exp/handle-explosion entity)
                     (:bomb? entity) (bomb/animate-bomb screen entity)
                     (:star? entity) (space/move-star screen entity)
