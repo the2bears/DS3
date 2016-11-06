@@ -288,7 +288,6 @@
 (defn swap-ship-doppel [ship doppel]
   (do
     (body-position! ship (:x doppel) (:y doppel) (:angle doppel))
-    (clojure.pprint/pprint (assoc ship :has-doppel? false))
     (assoc ship :has-doppel? false)))
 
 (defn handle-ghost [screen entities ghost]

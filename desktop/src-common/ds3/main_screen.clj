@@ -154,11 +154,7 @@
             (= (:key screen) (key-code :p))
             (do
               (update! screen :game-state :paused)
-              entities)
-            (= (:key screen) (key-code :d))
-            (do
-              (prn :on-key-up :doppel)
-              (ship/add-doppel! screen entities)))
+              entities))
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
             (on-new-game screen entities))

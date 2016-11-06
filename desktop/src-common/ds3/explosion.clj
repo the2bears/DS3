@@ -1,8 +1,7 @@
 (ns ds3.explosion
   (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format sound]]
             [play-clj.g2d :refer [texture]]
-            [ds3.common :as c]
-            [clojure.pprint :refer [pprint]]))
+            [ds3.common :as c]))
 
 (def ^:const x-offset (c/screen-to-world -3))
 (def ^:const y-offset (c/screen-to-world 2))
