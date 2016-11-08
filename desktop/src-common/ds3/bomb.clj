@@ -1,9 +1,10 @@
 (ns ds3.bomb
-  (:require [play-clj.core :refer [color shape sound]]
+  (:require [play-clj.core :refer [color shape]]
             [play-clj.g2d :refer [animation animation->texture texture]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! circle-shape fixture! fixture-def polygon-shape]]
             [play-clj.math :refer [vector-2]]
-            [ds3.common :as c])
+            [ds3.common :as c]
+            [ds3.sounds :as sounds])
   (:import [com.badlogic.gdx.physics.box2d Filter]))
 
 
@@ -38,7 +39,7 @@
         bomb2 (texture bomb :set-region 3 0 3 4)
         bomb-animation (animation 0.2 [bomb1 bomb2])
         animation-delta (/ (rand-int 1000) 1000.0)]
-    (sound "bomb2.ogg" :play)
+    (sounds/play-once :bomb)
     (assoc bomb1 :bomb-animation (animation 0.1 [bomb1 bomb2]) :total-time animation-delta
       :bomb? true :width bomb-width :height bomb-height :id :bomb :x x :y y
       :render-layer 75 :translate-x 0 :translate-y bomb-height

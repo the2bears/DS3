@@ -1,9 +1,10 @@
 (ns ds3.bullet
-  (:require [play-clj.core :refer [color shape sound]]
+  (:require [play-clj.core :refer [color music music! shape]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer [add-body! body! body-def body-position! fixture! fixture-def polygon-shape]]
             [play-clj.math :refer [vector-2]]
             [ds3.common :as c]
+            [ds3.sounds :as sounds]
             )
   (:import [com.badlogic.gdx.physics.box2d Filter]))
 
@@ -41,7 +42,7 @@
                                               (reset! bullet-texture (texture "shot.png" :set-region 0 0 2 4))
                                               @bullet-texture)
                      :else @bullet-texture)]
-    (sound "shot3.ogg" :play)
+    (sounds/play-once :bullet)
     (assoc bullet
       :id :bullet
       :bullet? true :render-layer 50

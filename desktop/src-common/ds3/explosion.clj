@@ -1,7 +1,8 @@
 (ns ds3.explosion
-  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format sound]]
+  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format]]
             [play-clj.g2d :refer [texture]]
-            [ds3.common :as c]))
+            [ds3.common :as c]
+            [ds3.sounds :as sounds]))
 
 (def ^:const x-offset (c/screen-to-world -3))
 (def ^:const y-offset (c/screen-to-world 2))
@@ -41,7 +42,7 @@
                     (assoc (textures 1) :x (- x layer2-width) :y (- y layer2-width) :ttl 12 :frame-ticks default-frame-ticks)
                     (assoc (textures 2) :x (- x layer3-width) :y (- y layer3-width) :ttl 12 :frame-ticks default-frame-ticks)
                     (assoc (textures 3) :x (- x layer4-width) :y (- y layer4-width) :ttl 12 :frame-ticks default-frame-ticks))]
-    (sound "explosion.ogg" :play)
+    (sounds/play-once :explosion)
     (assoc explosion :explosion? true :render-layer 100)))
 
 (defn create-explosion [x y]

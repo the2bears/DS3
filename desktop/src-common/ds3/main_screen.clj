@@ -10,6 +10,7 @@
             [ds3.explosion :as exp]
             [ds3.fps :as fps]
             [ds3.hud :as hud]
+            [ds3.sounds :as sounds]
             [ds3.space :as space]
             [ds3.spark :as spark])
 
@@ -50,7 +51,7 @@
                        (body-position! (c/screen-to-world (- 10)) (c/screen-to-world (- 20)) 0))
           space (space/create-space)]
       (spark/init-spark screen)
-
+      (sounds/init-sounds)
       [(assoc top-oob :id :top-oob :oob? true :render-layer 0)
        (assoc bottom-oob :id :bottom-oob :oob? true :render-layer 0)
        space]))

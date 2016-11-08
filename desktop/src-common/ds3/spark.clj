@@ -1,5 +1,5 @@
 (ns ds3.spark
-  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format update! sound x y]]
+  (:require [play-clj.core :refer [bundle color pixmap! pixmap* pixmap-format update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.math :refer [vector-2 vector-2!]]
             [ds3.common :as c]))

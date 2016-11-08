@@ -4,10 +4,11 @@
             [ds3.common :as c]
             [ds3.explosion :as exp]
             [ds3.ship :as ship]
+            [ds3.sounds :as sounds]
             [ds3.spark :as spark]
             [ds3.splines :as splines]
             [pixel-ships.bollinger :as bollinger :refer :all]
-            [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* screen! sound update! x y]]
+            [play-clj.core :refer [add-timer! bundle shape color key-pressed? pixmap! pixmap* screen! update! x y]]
             [play-clj.g2d :refer [texture]]
             [play-clj.g2d-physics :refer :all]
             [play-clj.math :refer [ b-spline b-spline! vector-2 vector-2!]])
@@ -218,7 +219,7 @@
 
 (defn- spark-enemy [{:keys [:hp] :as enemy} other-entity screen entities]
   (let [spark-emitter-id (spark/create-spark-emitter enemy)]
-    (sound "explosion.ogg" :play 0.35)
+    (sounds/play-once :explosion 0.35)
     (remove #(= other-entity %) (map #(if
                                         (= enemy %1)
                                         (assoc %1 :hp (- hp 1) :spark-emitter spark-emitter-id)
