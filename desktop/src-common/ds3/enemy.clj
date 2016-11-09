@@ -175,7 +175,9 @@
                 m-s (:movement-state enemy)]
             (cond (= :drifting m-s);Keep these separate as there will eventually be different behaviors
                   (if (= hp 0)
-                    (explode-enemy enemy other-entity screen entities)
+                    (do
+                      ;(create-minis screen (:ship-texture enemy) x (:y enemy));still good for debugging
+                      (explode-enemy enemy other-entity screen entities))
                     (spark-enemy enemy other-entity screen entities))
                   (or (= :capturing m-s) (= :dropping m-s) (= :beaming m-s) (= :attacking m-s))
                   (if (= hp 0)

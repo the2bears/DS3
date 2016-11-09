@@ -136,7 +136,9 @@
       (let [to-do ((:id screen) screen)
             new-entity (apply (:f to-do) (:args to-do))]
         (update! screen (:id screen) nil)
-        (conj (remove #(and (:ship? new-entity) (:ship? %)) entities) new-entity))))
+        (cond (:mini? new-entity) (conj (remove #(and (:ship? new-entity) (:ship? %)) entities) new-entity)
+              :else new-entity))
+      ))
 
   :on-pause
   (fn [{:keys [game-state] :as screen} entities]
@@ -155,7 +157,11 @@
             (= (:key screen) (key-code :p))
             (do
               (update! screen :game-state :paused)
-              entities))
+              entities)
+            (= (:key screen) (key-code :d))
+            (do
+              (prn :on-key-up :doppel)
+              (ship/add-doppel! screen entities)))
       :attract-mode
       (cond (= (:key screen) (key-code :num-1))
             (on-new-game screen entities))

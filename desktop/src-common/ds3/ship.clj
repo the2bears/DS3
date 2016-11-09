@@ -64,12 +64,14 @@
 
 (defn add-doppel! [screen entities]
   (let [ship (assoc (first (filter #(:ship? %) entities)) :has-doppel? true)
-        all-others (filter #(nil? (:ship? %)) entities)
+        all-others (remove #(:ship? %) entities)
         doppel (create-ship-entity! screen :doppel?)]
     (update! screen :p1-bonus (+ 1 (:p1-bonus screen)) :p1-rank (+ 1 (:p1-rank screen)))
     (body-position! ship (- (:x ship) ship-half-width) (:y ship) (:angle ship))
     (body-position! doppel (+ (:x ship) ship-half-width) (:y ship) (:angle ship))
-    [ship doppel]))
+    (-> all-others
+        (conj ship)
+        (conj doppel))))
 
 (defn- create-ghost-body!
   [screen]
@@ -193,29 +195,34 @@
 (defn handle-collision [{:keys [:ship? :has-doppel?] :as ship} other-entity screen entities]
   (let [doppel (first (filter #(:doppel? %) entities))]
     (cond (:bomb? other-entity)
-          (do
+          (let [new-entities (remove #(or (= other-entity %) (:doppel? %) (:ship? %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship))))]
             (if has-doppel?
               (let [next-keyword (c/rand-keyword)]
-                (update! screen next-keyword {:f swap-ship-doppel :args [ship doppel]})
+                (update! screen next-keyword {:f swap-ship-doppel :args [new-entities ship doppel]})
                 (add-timer! screen next-keyword 0.0))
               (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
-            (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities (exp/create-ship-explosion (:x ship) (:y ship)))))
+            new-entities)
           (:mini? other-entity)
-          (do
+          (let [new-entities (remove #(or (= other-entity %) (:doppel? %) (:ship? %)) (conj entities
+                                                                                            (exp/create-ship-explosion (:x ship) (:y ship))
+                                                                                            (exp/create-explosion (:x other-entity) (:y other-entity))))]
             (if has-doppel?
               (let [next-keyword (c/rand-keyword)]
-                (update! screen next-keyword {:f swap-ship-doppel :args [ship doppel]})
+                (update! screen next-keyword {:f swap-ship-doppel :args [new-entities ship doppel]})
                 (add-timer! screen next-keyword 0.0))
               (update! screen :can-attack? false :p1-rank c/starting-rank :p1-bonus 1))
-            (remove #(or (= other-entity %) (= doppel %) (= ship %)) (conj entities
-                                                                           (exp/create-ship-explosion (:x ship) (:y ship))
-                                                                           (exp/create-explosion (:x other-entity) (:y other-entity)))))
+            new-entities)
           (:ghost? other-entity)
           (let [next-keyword (c/rand-keyword)]
             (update! screen next-keyword {:f add-doppel! :args [screen (remove #(= other-entity %) entities)]})
             (add-timer! screen next-keyword 0)
             (remove #(= other-entity %) entities))
           :else entities)))
+
+(defn swap-ship-doppel [entities ship doppel]
+  (let [all-others (remove #(:ship? %) entities)]
+    (body-position! ship (:x doppel) (:y doppel) (:angle doppel))
+    (conj all-others (assoc ship :has-doppel? false))))
 
 (defn handle-doppel-collision [doppel other-entity screen entities]
   (let [ship (first (filter #(:ship? %) entities))]
@@ -284,11 +291,6 @@
     (do
       (body! ghost :set-linear-velocity 0 c/ghost-dropping-speed)
       ghost)))
-
-(defn swap-ship-doppel [ship doppel]
-  (do
-    (body-position! ship (:x doppel) (:y doppel) (:angle doppel))
-    (assoc ship :has-doppel? false)))
 
 (defn handle-ghost [screen entities ghost]
   (let [master (first (filter #(:master? %) entities))]
