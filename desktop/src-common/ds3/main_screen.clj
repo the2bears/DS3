@@ -158,7 +158,7 @@
             (do
               (update! screen :game-state :paused)
               entities)
-            (= (:key screen) (key-code :d))
+            (and c/debug (= (:key screen) (key-code :d)))
             (do
               (prn :on-key-up :doppel)
               (ship/add-doppel! screen entities)))
