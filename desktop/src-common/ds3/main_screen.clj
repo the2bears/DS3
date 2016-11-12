@@ -209,7 +209,7 @@
 
 (defn check-game-status [screen entities]
   (let [ship (first (filter #(:ship? %) entities))
-        enemies (filter #(:enemy? %) entities)
+        enemies (filter #(or (:enemy? %) (:mini? %)) entities)
         lives (:p1-lives screen)
         p1-score (:p1-level-score screen)
         high-score (if (< (:high-score screen) p1-score) p1-score (:high-score screen))]
