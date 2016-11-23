@@ -14,6 +14,8 @@
 
 (def ^:const starting-rank 0)
 
+(def ^:const extra-ships [50000 150000])
+
 (def ^:const game-width-adj (screen-to-world game-width))
 
 (def ^:const game-height-adj (screen-to-world game-height))

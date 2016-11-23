@@ -35,6 +35,7 @@
                           :world (box-2d 0 0);-2.0)
                           :ticks 0
                           :p1-level-score 0
+                          :extra-ship c/extra-ships
                           :high-score 0
                           :p1-lives 0;3
                           :p1-rank c/starting-rank
@@ -178,6 +179,7 @@
   (update! screen
            :ticks 0
            :p1-level-score 0
+           :extra-ship c/extra-ships
            :p1-lives 3
            :p1-rank c/starting-rank
            :p1-bonus 1
@@ -212,12 +214,17 @@
         enemies (filter #(or (:enemy? %) (:mini? %)) entities)
         lives (:p1-lives screen)
         p1-score (:p1-level-score screen)
-        high-score (if (< (:high-score screen) p1-score) p1-score (:high-score screen))]
+        high-score (if (< (:high-score screen) p1-score) p1-score (:high-score screen))
+        e-s-available? (some? (first (:extra-ship screen)))]
     (update! screen :high-score high-score)
     (screen! hud/hud-screen :on-update-lives :p1-lives lives)
     (screen! hud/hud-screen :on-update-score :p1-score (:p1-level-score screen) :high-score high-score)
     (screen! hud/hud-screen :on-update-game-state :game-state (:game-state screen))
     (screen! hud/hud-screen :on-update-bonus :p1-bonus (:p1-bonus screen))
+    (cond (and e-s-available? (>= p1-score (first (:extra-ship screen))))
+          (do
+            (update! screen :p1-lives (inc lives))
+            (update! screen :extra-ship (rest (:extra-ship screen)))))
     (cond (and (nil? ship)
                (= :in-game (:game-state screen))
                (every? #(= (:movement-state %) :drifting) enemies)
