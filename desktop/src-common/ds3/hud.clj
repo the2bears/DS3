@@ -1,6 +1,6 @@
 (ns ds3.hud
   (:require [play-clj.core :refer [add-timer! clear! color defscreen game orthographic render! screen! stage update!]]
-            [play-clj.g2d :refer [bitmap-font bitmap-font!]]
+            [play-clj.g2d :refer [bitmap-font bitmap-font! texture]]
             [ds3.common :as c])
   (:import [com.badlogic.gdx.graphics.g2d Batch BitmapFont]))
 
@@ -12,6 +12,8 @@
 (def ^:const p1-1up-y 4.0); 28.0);from top
 (def ^:const p1-score-x 28.0)
 (def ^:const p1-score-y 28.0)
+(def ^:const logo-x 126.0)
+(def ^:const logo-y 500.0)
 (def ^:const game-over-x 246.0)
 (def ^:const game-over-y 420.0)
 (def ^:const game-paused-x 276.0)
@@ -22,23 +24,27 @@
 (defscreen hud-screen
   :on-show
   (fn [screen entities]
-      (update! screen
-               :renderer (stage)
-               :camera (orthographic :set-to-ortho false)
-               :p1-score 0
-               :p1-bonus 1
-               :high-score 0
-               :render? false
-               :game-state :attract-mode
-               :font (bitmap-font "arcade20.fnt"))
-    entities)
+    (let [screen (update! screen
+                          :renderer (stage)
+                          :camera (orthographic :set-to-ortho false)
+                          :p1-score 0
+                          :p1-bonus 1
+                          :high-score 0
+                          :render? false
+                          :game-state :attract-mode
+                          :font (bitmap-font "arcade20.fnt"))]
+      entities))
 
   :on-render
   (fn [screen entities]
     (let [renderer (:renderer screen)
           ^Batch batch (.getBatch renderer)
           arcade-fnt (:font screen)
-          bonus (:p1-bonus screen)]
+          bonus (:p1-bonus screen)
+          show-logo? (= :attract-mode (:game-state screen))
+          entities (if show-logo?
+                     (conj entities (assoc (texture "ds3_logo.png") :logo? true :width 180 :height 60 :x logo-x :y logo-y))
+                     entities)]
       (.begin batch)
       (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
       (bitmap-font! ^BitmapFont arcade-fnt :draw batch "1UP" p1-1up-x (- (game :height) y-padding))
@@ -55,7 +61,7 @@
             (= :attract-mode (:game-state screen))
             (do
               (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
-              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "CHOOSE 1 OR 2 PLAYERS" 126.0 game-over-y))
+              (bitmap-font! ^BitmapFont arcade-fnt :draw batch "CHOOSE 1 OR 2 PLAYERS" logo-x game-over-y))
             (= :paused (:game-state screen))
             (do
               (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :white))
@@ -64,10 +70,10 @@
         (do
           (bitmap-font! ^BitmapFont arcade-fnt :set-color (color :yellow))
           (bitmap-font! ^BitmapFont arcade-fnt :draw batch (str "x" bonus) 188.0 (- (game :height) p1-score-y))))
-      (.end batch))
-    (->> entities
-         (count-mini-ships screen)
-         (render! screen)))
+      (.end batch)
+      (->> entities
+           (count-mini-ships screen)
+           (render! screen))))
 
   ;Called by the main_screen, passing in :score
   :on-update-score
@@ -105,7 +111,6 @@
         expected-count (- (:p1-lives screen) 1)]
     (cond (and (> expected-count -1) (not= expected-count actual-count))
           (->> entities
-               (filter #(not (:mini-ship? %)))
                (add-mini-ships expected-count))
           :else entities)))
 
