@@ -1,4 +1,4 @@
-(defproject ds3 "0.0.1-SNAPSHOT"
+(defproject ds3 "1.0-beta1-SNAPSHOT"
   :description "DS3 Gallery Shooter"
 
   :dependencies [[com.badlogicgames.gdx/gdx "1.9.3"]
