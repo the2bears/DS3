@@ -11,6 +11,7 @@
 (def star-alpha 0.75)
 (def star-color-dim 0.75)
 (def star-color-full 1.0)
+(def off-screen-padding 5)
 
 (defn create-star-texture [c]
   (let [pix-map (pixmap* 1 1 (pixmap-format :r-g-b-a8888))]
@@ -25,18 +26,21 @@
     :x x :y y
     :star? true :id :star
     :render-layer 1
-    :speed (first (shuffle star-speeds))))
+    :speed (rand-nth star-speeds)))
 
 (defn create-space []
   (let [colors [star-color-dim star-color-full]
         color-list (rest (for [x colors y colors z colors] (color x y z star-alpha)));create all binary combinations for r g b, but drop [dim dim dim]
-        star-textures (map (fn [c] (create-star-texture (color c))) color-list)]
+        star-textures (map (fn [c] (create-star-texture c)) color-list)]
     (for [count (range star-count)]
-      (create-star (c/screen-to-world (rand-int c/game-width)) (c/screen-to-world (rand-int c/game-height)) (first (shuffle star-textures)))
-      )))
+      (create-star (c/screen-to-world (rand-int c/game-width)) 
+                   (c/screen-to-world (rand-int c/game-height)) 
+                   (rand-nth star-textures)))))
+      
 
 (defn move-star [screen {:keys [:y :speed] :as entity}]
   (let [new-y (if (< (+ y speed) 0)
-                    (+ (c/screen-to-world 5) (c/screen-to-world c/game-height))
-                    (+ y speed))]
-  (assoc entity :y new-y)))
+                  (+ (c/screen-to-world off-screen-padding) 
+                     (c/screen-to-world c/game-height))
+                  (+ y speed))]
+    (assoc entity :y new-y)))
