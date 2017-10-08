@@ -21,6 +21,8 @@
 (def ^:const high-score-label-x (/ 472.0 2.0)) ;(* 3 224)
 (def ^:const high-score-x (/ 472.0 2.0))
 
+(def mini-ships-texture (atom nil))
+
 (defscreen hud-screen
   :on-show
   (fn [screen entities]
@@ -32,7 +34,8 @@
                           :high-score 0
                           :render? false
                           :game-state :attract-mode
-                          :font (bitmap-font "arcade20.fnt"))]
+                          :font (bitmap-font "arcade20.fnt"))
+          _ (reset! mini-ships-texture (ds3.ship/create-pixel-ship-texture (Integer/MAX_VALUE)))]
       entities))
 
   :on-render
@@ -75,14 +78,12 @@
            (count-mini-ships screen)
            (render! screen))))
 
-  ;Called by the main_screen, passing in :score
+                                        ;Called by the main_screen, passing in :score
   :on-update-score
   (fn [screen entities]
     (let [score (:p1-score screen)
           high-score (:high-score screen)]
-      (update! screen :p1-score score :high-score high-score)
-      ;(prn :score score)
-      )
+      (update! screen :p1-score score :high-score high-score))
     nil)
 
   :on-update-lives
@@ -117,10 +118,10 @@
 (defn add-mini-ships [n entities]
   (let [ships (for [ship (range n)
                     :let [x (- 600 (* ship 32))]]
-                (assoc (ds3.ship/create-pixel-ship-texture (Integer/MAX_VALUE))
-                  :width 32 :height 32
-                  :x x :y 5
-                  :id :pixel-ship :mini-ship? true))]
+                (assoc @mini-ships-texture
+                       :width 32 :height 32
+                       :x x :y 5
+                       :id :pixel-ship :mini-ship? true))]
     (flatten (conj entities ships))))
 
 (defn pad-score [score]
